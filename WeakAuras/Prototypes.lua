@@ -117,24 +117,26 @@ if WeakAuras.IsRetail() then
     if Private.player_target_events[event] then
       unit = Private.player_target_events[event]
     end
-    if event == "UNIT_SPELLCAST_EMPOWER_START"
-    or event == "UNIT_SPELLCAST_EMPOWER_UPDATE"
-    or (
-      (Private.player_target_events[event])
-      and (select(10, UnitChannelInfo(unit)) or 0) > 0  -- 10th arg of UnitChannelInfo is numStages for empowered spells
-    )
-    then
-      cacheEmpowered[unit] = {GetUnitEmpowerHoldAtMaxTime(unit), UnitChannelInfo(unit)}
-    else
-      cacheEmpowered[unit] = nil
-    end
-    if unit == "player" and event == "UNIT_SPELLCAST_EMPOWER_START" or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
-      local castLatencyFrame = Private.frames["Cast Latency Handler"]
-      if castLatencyFrame then
-        castLatencyFrame:GetScript("OnEvent")(nil, event, unit, ...)
-      end
-    end
-    Private.ScanUnitEvents(event.."_FAKE", unit, ...)
+
+    -- if event == "UNIT_SPELLCAST_EMPOWER_START"
+    -- or event == "UNIT_SPELLCAST_EMPOWER_UPDATE"
+    -- or (
+    --   (Private.player_target_events[event])
+    --   and (select(10, UnitChannelInfo(unit)) or 0) > 0  -- 10th arg of UnitChannelInfo is numStages for empowered spells
+    -- )
+    -- then
+    --   cacheEmpowered[unit] = {GetUnitEmpowerHoldAtMaxTime(unit), UnitChannelInfo(unit)}
+    -- else
+    --   cacheEmpowered[unit] = nil
+    -- end
+
+    -- if unit == "player" and event == "UNIT_SPELLCAST_EMPOWER_START" or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+    --   local castLatencyFrame = Private.frames["Cast Latency Handler"]
+    --   if castLatencyFrame then
+    --     castLatencyFrame:GetScript("OnEvent")(nil, event, unit, ...)
+    --   end
+    -- end
+    -- Private.ScanUnitEvents(event.."_FAKE", unit, ...)
   end)
 else
   WeakAuras.UnitChannelInfo = UnitChannelInfo
