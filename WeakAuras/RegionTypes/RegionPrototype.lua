@@ -455,15 +455,12 @@ local function UpdateProgressFromState(self, minMaxConfig, state, progressSource
     -- the animation code/sub elements needs those values in some convenient place
     self.minProgress, self.maxProgress = adjustMin, max
     self.progressType = "static"
-    if issecretvalue(value) then
+    if issecretvalue(value) or issecretvalue(total) then
+      self.total = max
       self.value = value
     else
-      self.value = value - adjustMin
-    end
-    if issecretvalue(total) then
-      self.total = max
-    else
       self.total = max - adjustMin
+      self.value = value - adjustMin
     end
 
     if self.UpdateValue then
