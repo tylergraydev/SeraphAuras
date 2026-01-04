@@ -884,16 +884,13 @@ local funcs = {
   end,
   SetProgress = function(self, progress)
     if WeakAuras.IsDurationObject(progress) then
-      local fullSize = self.bar:GetRealSize();
-      self.bar.fgMask:SetWidth(fullSize);
-      if self.inverseDirection then
-        self.bar:SetTimerDuration(progress, nil, Enum.StatusBarTimerDirection.RemainingTime)
-
-      else
-        self.bar:SetTimerDuration(progress)
-      end
+      self:UseSecretMask()
+      self:UpdateSecretMaskInverse()
+      self.secretBar:SetTimerDuration(progress)
       return
     end
+
+    self:UseNormalMask()
     if self.inverseDirection then
       progress = 1 - progress;
     end
@@ -903,6 +900,64 @@ local funcs = {
       self.bar:SetSmoothedValue(progress);
     else
       self.bar:SetValue(progress);
+    end
+  end,
+  SetProgressSecret = function(self, value, total)
+    self:UseSecretMask()
+    self:UpdateSecretMaskInverse()
+
+    self.secretBar:SetMinMaxValues(self.minProgress, self.maxProgress)
+    if self.smoothProgress then
+      self.secretBar:SetValue(self.value, Enum.StatusBarInterpolation.ExponentialEaseOut);
+    else
+      self.secretBar:SetValue(self.value)
+    end
+  end,
+  UseNormalMask = function(self)
+    if self.activeMask == "normal" then
+      return
+    end
+    self.bar.fg:RemoveMaskTexture(self.bar.fgMaskSecret)
+    self.bar.fg:AddMaskTexture(self.bar.fgMask)
+    self.activeMask = "normal"
+  end,
+  UseSecretMask = function(self)
+    if self.activeMask == "secret" then
+      return
+    end
+    self.bar:ResetSmoothedValue()
+    self.bar.fg:AddMaskTexture(self.bar.fgMaskSecret)
+    self.bar.fg:RemoveMaskTexture(self.bar.fgMask)
+    self.activeMask = "secret"
+  end,
+  UpdateSecretMaskInverse = function(self, force)
+    -- if we want to set reversed progress for secret values we have to play with mask anchoring
+    local inverse = self.inverseDirection
+    local inverseValue = inverse and self.orientation or false
+    if self.secretMaskInversed == inverseValue and not force then
+      return
+    end
+    self.secretMaskInversed = inverseValue
+
+    self.bar.fgMaskSecret:ClearAllPoints()
+    if not inverse then
+      self.bar.fgMaskSecret:SetAllPoints(self.secretBar:GetStatusBarTexture())
+    elseif inverseValue == "HORIZONTAL" then
+      self.bar.fgMaskSecret:SetPoint("TOPRIGHT", self.secretBar:GetStatusBarTexture(), "TOPLEFT")
+      self.bar.fgMaskSecret:SetPoint("BOTTOMLEFT", self.bar, "BOTTOMLEFT")
+      self.secretBar:SetReverseFill(true)
+    elseif inverseValue == "HORIZONTAL_INVERSE" then
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.secretBar:GetStatusBarTexture(), "TOPRIGHT")
+      self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.bar, "BOTTOMRIGHT")
+      self.secretBar:SetReverseFill(false)
+    elseif inverseValue == "VERTICAL" then
+      self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.secretBar:GetStatusBarTexture(), "TOPRIGHT")
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.bar, "TOPLEFT")
+      self.secretBar:SetReverseFill(false)
+    elseif inverseValue == "VERTICAL_INVERSE" then
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.secretBar:GetStatusBarTexture(), "BOTTOMLEFT")
+      self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.bar, "BOTTOMRIGHT")
+      self.secretBar:SetReverseFill(true)
     end
   end,
   UpdateDuration = function(self)
@@ -915,12 +970,16 @@ local funcs = {
     end
   end,
   UpdateValue = function(self)
-    local progress = 0;
-    if (self.total ~= 0) then
-      progress = self.value / self.total;
-    end
+    if issecretvalue(self.value) or issecretvalue(self.total) then
+      self:SetProgressSecret(self.value, self.total)
+    else
+      local progress = 0;
+      if (self.total ~= 0) then
+        progress = self.value / self.total;
+      end
 
-    self:SetProgress(progress)
+      self:SetProgress(progress)
+    end
 
     if self.FrameTick then
       self.FrameTick = nil
@@ -958,6 +1017,7 @@ local funcs = {
       self.bar:SetValue(1 - self.bar:GetValue());
     end
     self.bar:SetAdditionalBarsInverse(not self.bar:GetAdditionalBarsInverse())
+    self:UpdateSecretMaskInverse()
     self.subRegionEvents:Notify("InverseChanged")
   end,
   SetOrientation = function(self, orientation)
@@ -1107,6 +1167,21 @@ local funcs = {
     end
 
     if orientation ~= self.effectiveOrientation or force then
+       if orientation == "HORIZONTAL" then
+        self.secretBar:SetOrientation("HORIZONTAL");
+        self.secretBar:SetReverseFill(false);
+      elseif orientation == "HORIZONTAL_INVERSE" then
+        self.secretBar:SetOrientation("HORIZONTAL");
+        self.secretBar:SetReverseFill(true);
+      elseif orientation == "VERTICAL" then
+        self.secretBar:SetOrientation("VERTICAL");
+        self.secretBar:SetReverseFill(true);
+      elseif orientation == "VERTICAL_INVERSE" then
+        self.secretBar:SetOrientation("VERTICAL");
+        self.secretBar:SetReverseFill(false);
+      end
+      self:UpdateSecretMaskInverse(true)
+
       self.effectiveOrientation = orientation
       self:ReOrient()
     end
@@ -1172,9 +1247,18 @@ local function create(parent)
   region:SetResizable(true);
   region:SetResizeBounds(1, 1)
 
-  local bar = CreateFrame("StatusBar", nil, region);
+  local bar = CreateFrame("Frame", nil, region);
+  local secretBar = CreateFrame("StatusBar", nil, region);
+  secretBar:SetAllPoints(bar);
   -- we need to set texture here to initialize the statusbar properly
-  bar:SetStatusBarTexture("Interface\\AddOns\\WeakAuras\\Media\\Textures\\Square_FullWhite");
+  secretBar:SetStatusBarTexture("Interface\\AddOns\\WeakAuras\\Media\\Textures\\Square_FullWhite");
+  secretBar:SetColorFill(0, 0, 0, 0);
+  local secretBarMask = bar:CreateMaskTexture()
+  secretBarMask:SetTexture("Interface\\AddOns\\WeakAuras\\Media\\Textures\\Square_FullWhite",
+                    "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE", "NEAREST")
+  secretBarMask:SetTexelSnappingBias(0)
+  secretBarMask:SetSnapToPixelGrid(false)
+  secretBarMask:SetAllPoints(secretBar:GetStatusBarTexture())
   --- @cast bar table|Frame
   Mixin(bar, Private.SmoothStatusBarMixin);
 
@@ -1184,7 +1268,7 @@ local function create(parent)
   bg:SetSnapToPixelGrid(false)
   bg:SetAllPoints(bar);
 
-  local fg = bar:GetStatusBarTexture() -- bar:CreateTexture(nil, "ARTWORK");
+  local fg = bar:CreateTexture(nil, "ARTWORK");
   fg:SetTexelSnappingBias(0)
   fg:SetSnapToPixelGrid(false)
   fg:SetAllPoints(bar)
@@ -1195,6 +1279,7 @@ local function create(parent)
   fgMask:SetTexelSnappingBias(0)
   fgMask:SetSnapToPixelGrid(false)
   fg:AddMaskTexture(fgMask)
+  fg:AddMaskTexture(secretBarMask)
 
   local spark = bar:CreateTexture(nil, "ARTWORK");
   spark:SetSnapToPixelGrid(false)
@@ -1204,6 +1289,7 @@ local function create(parent)
   spark:SetDrawLayer("ARTWORK", 7);
   bar.fg = fg;
   bar.fgMask = fgMask
+  bar.fgMaskSecret = secretBarMask
   bar.bg = bg;
   bar.spark = spark;
   for key, value in pairs(barPrototype) do
@@ -1213,6 +1299,7 @@ local function create(parent)
   bar:SetRotatesTexture(true);
   bar:HookScript("OnSizeChanged", bar.OnSizeChanged);
   region.bar = bar;
+  region.secretBar = secretBar;
 
   -- Create icon
   local iconFrame = CreateFrame("Frame", nil, region);

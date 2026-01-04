@@ -434,29 +434,38 @@ local function UpdateProgressFromState(self, minMaxConfig, state, progressSource
     local total = totalProperty and state[totalProperty]
     if type(total) ~= "number" then total = 0 end
     -- We don't care about inverse, modRate or paused
-    local adjustMin
+    local adjustMin, max
     if minMaxConfig.adjustedMin then
       adjustMin = minMaxConfig.adjustedMin
-    elseif minMaxConfig.adjustedMinRelPercent then
+    elseif minMaxConfig.adjustedMinRelPercent and not issecretvalue(total) then
       adjustMin = minMaxConfig.adjustedMinRelPercent * total
     else
       adjustMin = 0
     end
-    local max
     if minMaxConfig.adjustedMax then
       max = minMaxConfig.adjustedMax
-    elseif minMaxConfig.adjustedMaxRelPercent then
+    elseif minMaxConfig.adjustedMaxRelPercent and not issecretvalue(total) then
       max = minMaxConfig.adjustedMaxRelPercent * total
     else
       max = total
     end
+
     -- The output of UpdateProgress is setting various values on self
     -- and calling UpdateTime/UpdateValue. Not an ideal interface, but
     -- the animation code/sub elements needs those values in some convenient place
     self.minProgress, self.maxProgress = adjustMin, max
     self.progressType = "static"
-    self.value = value - adjustMin
-    self.total = max - adjustMin
+    if issecretvalue(value) then
+      self.value = value
+    else
+      self.value = value - adjustMin
+    end
+    if issecretvalue(total) then
+      self.total = max
+    else
+      self.total = max - adjustMin
+    end
+
     if self.UpdateValue then
       self:UpdateValue()
     end
