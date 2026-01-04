@@ -1933,11 +1933,13 @@ do
       if newAPI then
         -- copy parameters passed to ScanUnitWithFilter in parent's scope for HandleAura
         _matchDataChanged, _time, _unit, _filter, _scanFuncNameGroup, _scanFuncSpellIdGroup, _scanFuncGeneralGroup, _scanFuncName, _scanFuncSpellId, _scanFuncGeneral = matchDataChanged, time, unit, filter, scanFuncNameGroup, scanFuncSpellIdGroup, scanFuncGeneralGroup, scanFuncName, scanFuncSpellId, scanFuncGeneral
-        if unitAuraUpdateInfo and false then
+        if unitAuraUpdateInfo then
           -- incremental
           if unitAuraUpdateInfo.addedAuras ~= nil then
             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-              if (aura.isHelpful and filter == "HELPFUL") or (aura.isHarmful and filter == "HARMFUL") then
+              local isHelpful = not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, "HELPFUL")
+              local isHarmful = not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, aura.auraInstanceID, "HARMFUL")
+              if (isHelpful and filter == "HELPFUL") or (isHarmful and filter == "HARMFUL") then
                 HandleAura(aura)
               end
             end
@@ -1945,8 +1947,10 @@ do
 
           if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
             for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-              local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
-              if aura and ((aura.isHelpful and filter == "HELPFUL") or (aura.isHarmful and filter == "HARMFUL")) then
+              local isHelpful = not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, auraInstanceID, "HELPFUL")
+              local isHarmful = not C_UnitAuras.IsAuraFilteredOutByInstanceID(unit, auraInstanceID, "HARMFUL")
+              if (isHelpful and filter == "HELPFUL") or (isHarmful and filter == "HARMFUL") then
+                local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
                 HandleAura(aura)
               end
             end
@@ -2340,7 +2344,13 @@ local function EventHandler(frame, event, arg1, arg2, ...)
         end)
       end
     end
-
+  elseif event == "ADDON_RESTRICTION_STATE_CHANGED" then
+    local restrictionType, restrictionState = arg1, arg2
+    if restrictionState == Enum.AddOnRestrictionState.Inactive then
+      for unit in pairs(matchData) do
+        ScanUnit(time, unit)
+      end
+    end
   elseif event == "RAID_TARGET_UPDATE" then
     ScanRaidMarkScanFunc(matchDataChanged)
   elseif event == "UNIT_TARGETABLE_CHANGED" then
@@ -2409,6 +2419,7 @@ Buff2Frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 Buff2Frame:RegisterEvent("PARTY_MEMBER_DISABLE")
 Buff2Frame:RegisterEvent("PARTY_MEMBER_ENABLE")
 Buff2Frame:RegisterEvent("UNIT_TARGETABLE_CHANGED")
+Buff2Frame:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED")
 Buff2Frame:SetScript("OnEvent", EventHandler)
 
 -- For UNIT_IN_RANGE_UPDATE Blizzard apparently checks whether anyone
