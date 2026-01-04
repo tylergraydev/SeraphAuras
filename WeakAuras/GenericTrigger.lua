@@ -2239,7 +2239,7 @@ do
 
     -- Helper functions
     AddEffectiveSpellId = function(self, effectiveSpellId, userSpellId)
-      if C_Secrets.ShouldCooldownsBeSecret() then return end
+      if C_Secrets.ShouldSpellCooldownBeSecret(effectiveSpellId) or C_Secrets.ShouldSpellCooldownBeSecret(userSpellId) then return end
       if self.data[effectiveSpellId] then
         self.data[effectiveSpellId].watched[userSpellId] = (self.data[effectiveSpellId].watched[userSpellId] or 0) + 1
         return
@@ -2278,7 +2278,6 @@ do
 
     -- Actual api
     CheckSpellKnown = function(self)
-      if C_Secrets.ShouldCooldownsBeSecret() then return end
       -- Check for spells whose effective spell id changed
       for userSpellId, watchedData in pairs(self.watchedSpellIds) do
         for useExact, useExactData in pairs(watchedData) do
@@ -2467,7 +2466,7 @@ do
     end,
 
     GetSpellCharges = function(self, effectiveSpellId, ignoreSpellKnown)
-      if C_Secrets.ShouldCooldownsBeSecret() then return end
+      if C_Secrets.ShouldSpellCooldownBeSecret(effectiveSpellId) then return end
       local spellDetail = self.data[effectiveSpellId]
       if not spellDetail then
         return
@@ -2480,7 +2479,7 @@ do
     end,
 
     GetSpellCooldown = function(self, effectiveSpellId, ignoreRuneCD, showgcd, ignoreSpellKnown, track)
-      if C_Secrets.ShouldCooldownsBeSecret() then return end
+      if C_Secrets.ShouldSpellCooldownBeSecret(effectiveSpellId) then return end
       if (not (self.data[effectiveSpellId] and self.data[effectiveSpellId].known) and not ignoreSpellKnown) then
         return;
       end
