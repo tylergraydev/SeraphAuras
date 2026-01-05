@@ -933,29 +933,32 @@ local funcs = {
   UpdateSecretMaskInverse = function(self, force)
     -- if we want to set reversed progress for secret values we have to play with mask anchoring
     local inverse = self.inverseDirection
-    local inverseValue = inverse and self.orientation or false
+    local inverseValue = inverse and self.effectiveOrientation or false
     if self.secretMaskInversed == inverseValue and not force then
       return
     end
     self.secretMaskInversed = inverseValue
 
+    -- we have to add those 0.01 offsets to avoid situations when mask becomes invisible and stops working
+    local OFFSET = 0.01
     self.bar.fgMaskSecret:ClearAllPoints()
     if not inverse then
-      self.bar.fgMaskSecret:SetAllPoints(self.secretBar:GetStatusBarTexture())
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.secretBar:GetStatusBarTexture(), "TOPLEFT", -OFFSET, OFFSET)
+      self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.secretBar:GetStatusBarTexture(), "BOTTOMRIGHT")
     elseif inverseValue == "HORIZONTAL" then
-      self.bar.fgMaskSecret:SetPoint("TOPRIGHT", self.secretBar:GetStatusBarTexture(), "TOPLEFT")
-      self.bar.fgMaskSecret:SetPoint("BOTTOMLEFT", self.bar, "BOTTOMLEFT")
+      self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.secretBar:GetStatusBarTexture(), "BOTTOMLEFT")
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.bar, "TOPLEFT", -OFFSET, OFFSET)
       self.secretBar:SetReverseFill(true)
     elseif inverseValue == "HORIZONTAL_INVERSE" then
-      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.secretBar:GetStatusBarTexture(), "TOPRIGHT")
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.secretBar:GetStatusBarTexture(), "TOPRIGHT", -OFFSET, OFFSET)
       self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.bar, "BOTTOMRIGHT")
       self.secretBar:SetReverseFill(false)
     elseif inverseValue == "VERTICAL" then
       self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.secretBar:GetStatusBarTexture(), "TOPRIGHT")
-      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.bar, "TOPLEFT")
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.bar, "TOPLEFT", -OFFSET, OFFSET)
       self.secretBar:SetReverseFill(false)
     elseif inverseValue == "VERTICAL_INVERSE" then
-      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.secretBar:GetStatusBarTexture(), "BOTTOMLEFT")
+      self.bar.fgMaskSecret:SetPoint("TOPLEFT", self.secretBar:GetStatusBarTexture(), "BOTTOMLEFT", -OFFSET, OFFSET)
       self.bar.fgMaskSecret:SetPoint("BOTTOMRIGHT", self.bar, "BOTTOMRIGHT")
       self.secretBar:SetReverseFill(true)
     end
@@ -1167,7 +1170,7 @@ local funcs = {
     end
 
     if orientation ~= self.effectiveOrientation or force then
-       if orientation == "HORIZONTAL" then
+      if orientation == "HORIZONTAL" then
         self.secretBar:SetOrientation("HORIZONTAL");
         self.secretBar:SetReverseFill(false);
       elseif orientation == "HORIZONTAL_INVERSE" then
@@ -1180,9 +1183,9 @@ local funcs = {
         self.secretBar:SetOrientation("VERTICAL");
         self.secretBar:SetReverseFill(false);
       end
-      self:UpdateSecretMaskInverse(true)
 
       self.effectiveOrientation = orientation
+      self:UpdateSecretMaskInverse(true)
       self:ReOrient()
     end
 
@@ -1252,13 +1255,12 @@ local function create(parent)
   secretBar:SetAllPoints(bar);
   -- we need to set texture here to initialize the statusbar properly
   secretBar:SetStatusBarTexture("Interface\\AddOns\\WeakAuras\\Media\\Textures\\Square_FullWhite");
-  secretBar:SetColorFill(0, 0, 0, 0);
+  secretBar:SetColorFill(1, 1, 1, 0);
   local secretBarMask = bar:CreateMaskTexture()
   secretBarMask:SetTexture("Interface\\AddOns\\WeakAuras\\Media\\Textures\\Square_FullWhite",
                     "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE", "NEAREST")
   secretBarMask:SetTexelSnappingBias(0)
   secretBarMask:SetSnapToPixelGrid(false)
-  secretBarMask:SetAllPoints(secretBar:GetStatusBarTexture())
   --- @cast bar table|Frame
   Mixin(bar, Private.SmoothStatusBarMixin);
 
@@ -1278,8 +1280,6 @@ local function create(parent)
                     "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE", "NEAREST")
   fgMask:SetTexelSnappingBias(0)
   fgMask:SetSnapToPixelGrid(false)
-  fg:AddMaskTexture(fgMask)
-  fg:AddMaskTexture(secretBarMask)
 
   local spark = bar:CreateTexture(nil, "ARTWORK");
   spark:SetSnapToPixelGrid(false)
@@ -1300,6 +1300,28 @@ local function create(parent)
   bar:HookScript("OnSizeChanged", bar.OnSizeChanged);
   region.bar = bar;
   region.secretBar = secretBar;
+
+  --debug anchors texts
+  -- secretBarMask.topLeft = secretBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall");
+  -- secretBarMask.topLeft:SetPoint("BOTTOMRIGHT", secretBarMask, "TOPLEFT")
+  -- secretBarMask.topLeft:SetText("TL")
+  -- secretBarMask.topLeft:SetTextColor(1, 0, 0)
+
+  -- secretBarMask.topRight = secretBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall");
+  -- secretBarMask.topRight:SetPoint("BOTTOMLEFT", secretBarMask, "TOPRIGHT")
+  -- secretBarMask.topRight:SetText("TR")
+  -- secretBarMask.topRight:SetTextColor(0, 1, 0)
+
+  -- secretBarMask.bottomLeft = secretBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall");
+  -- secretBarMask.bottomLeft:SetPoint("TOPRIGHT", secretBarMask, "BOTTOMLEFT")
+  -- secretBarMask.bottomLeft:SetText("BL")
+  -- secretBarMask.bottomLeft:SetTextColor(0, 0, 1)
+
+  -- secretBarMask.bottomRight = secretBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall");
+  -- secretBarMask.bottomRight:SetPoint("TOPLEFT", secretBarMask, "BOTTOMRIGHT")
+  -- secretBarMask.bottomRight:SetText("BR")
+  -- secretBarMask.bottomRight:SetTextColor(1, 1, 0)
+
 
   -- Create icon
   local iconFrame = CreateFrame("Frame", nil, region);
