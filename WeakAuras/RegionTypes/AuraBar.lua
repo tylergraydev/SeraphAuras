@@ -312,6 +312,9 @@ local barPrototype = {
   end,
 
   ["UpdateProgress"] = function(self)
+    if self:GetParent().activeMask == "secret" then
+      return
+    end
     -- Limit values
     local value = self.value;
     value = math.max(self.min, value);
@@ -919,6 +922,7 @@ local funcs = {
     end
     self.bar.fg:RemoveMaskTexture(self.bar.fgMaskSecret)
     self.bar.fg:AddMaskTexture(self.bar.fgMask)
+    self.bar.fg:Show()
     self.activeMask = "normal"
   end,
   UseSecretMask = function(self)
@@ -928,6 +932,7 @@ local funcs = {
     self.bar:ResetSmoothedValue()
     self.bar.fg:AddMaskTexture(self.bar.fgMaskSecret)
     self.bar.fg:RemoveMaskTexture(self.bar.fgMask)
+    self.bar.fg:Show()
     self.activeMask = "secret"
   end,
   UpdateSecretMaskInverse = function(self, force)
