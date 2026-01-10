@@ -4163,7 +4163,7 @@ Private.event_prototypes = {
       local events = {
         "SPELL_COOLDOWN_CHANGED:" .. spellName,
         "COOLDOWN_REMAINING_CHECK:" .. spellName,
-        "WA_DELAYED_PLAYER_ENTERING_WORLD"
+        "WA_DELAYED_PLAYER_ENTERING_WORLD",
       };
       if (trigger.use_showgcd) then
         tinsert(events, "GCD_START");
@@ -4195,11 +4195,11 @@ Private.event_prototypes = {
 
       local showOnCheck = "false";
       if (trigger.genericShowOn == "showOnReady") then
-        showOnCheck = "startTime and startTime == 0 or gcdCooldown";
+        showOnCheck = "(isSecret and isReady) or (not isSecret and startTime and startTime == 0 or gcdCooldown)";
       elseif (trigger.genericShowOn == "showOnCooldown") then
-        showOnCheck = "startTime and startTime > 0 and not gcdCooldown";
+        showOnCheck = "(isSecret and not isReady) or (not isSecret and startTime and startTime > 0 and not gcdCooldown)";
       elseif (trigger.genericShowOn == "showAlways") then
-        showOnCheck = "startTime ~= nil";
+        showOnCheck = "startTime ~= nil or durationObject ~= nil";
       end
 
       local trackSpecificCharge = trigger.use_trackcharge and trigger.trackcharge and trigger.trackcharge ~= ""
@@ -4221,7 +4221,17 @@ Private.event_prototypes = {
         local name, _, icon = Private.ExecEnv.GetSpellInfo(effectiveSpellId)
         local startTime, duration, gcdCooldown, readyTime, modRate, paused = WeakAuras.GetSpellCooldown(effectiveSpellId, ignoreRuneCD, showgcd, ignoreSpellKnown, track)
         local charges, maxCharges, spellCount, chargeGainTime, chargeLostTime = WeakAuras.GetSpellCharges(effectiveSpellId, ignoreSpellKnown)
-        local stacks = maxCharges and maxCharges ~= 1 and charges or (spellCount and spellCount > 0 and spellCount) or nil;
+        local isSecret = C_Secrets.ShouldSpellCooldownBeSecret(effectiveSpellId) or issecretvalue(maxCharges)
+        local stacks
+        if isSecret then
+          stacks = C_Spell.GetSpellDisplayCount(effectiveSpellId)
+        else
+          stacks = maxCharges and maxCharges ~= 1 and charges or (spellCount and spellCount > 0 and spellCount) or nil;
+        end
+        local durationObject, isReady
+        if isSecret then
+          durationObject, isReady = WeakAuras.GetSpellCooldownDuration(effectiveSpellId)
+        end
         if showlossofcontrol and startTime and duration then
           local locStart, locDuration = WeakAuras.GetSpellLossOfControlCooldown(spellname);
           if locStart and locDuration and (locStart + locDuration) > (startTime + duration) then
@@ -4280,7 +4290,13 @@ Private.event_prototypes = {
             state.modRate = modRate;
             state.changed = true;
           end
-          state.progressType = 'timed';
+          if isSecret then
+            state.changed = true;
+            state.durationObject = durationObject;
+            state.progressType = 'durationObject';
+          else
+            state.progressType = 'timed';
+          end
         ]=])
       else -- Tracking charges
         local trackedCharge = tonumber(trigger.trackcharge) or 1;

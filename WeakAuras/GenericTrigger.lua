@@ -2073,6 +2073,19 @@ do
   local function HandleSpell(self, id, startTime, duration, modRate, paused)
     local changed = false
     local nowReady = false
+    if C_Secrets.ShouldSpellCooldownBeSecret(id) then
+      local cooldownInfo = C_Spell.GetSpellCooldown(id)
+      if cooldownInfo then
+        isReady = cooldownInfo.timeUntilEndOfStartRecovery == nil
+        local wasReady = self.readyState[id]
+        changed = isReady ~= wasReady
+        self.readyState[id] = isReady
+        return changed, isReady
+      end
+    else
+      self.readyState[id] = nil
+    end
+
     local time = GetTime()
     if self.expirationTime[id] and self.expirationTime[id] <= time and self.expirationTime[id] ~= 0 then
       self.readyTime[id] = self.expirationTime[id]
@@ -2171,6 +2184,7 @@ do
   ---@field readyTime table<number, number>
   ---@field modRate table<number, number>
   ---@field handles table<number, any>
+  ---@field readyState table<number, boolean>
   ---@field HandleSpell fun(self: SpellCDHandler, id: number, startTime: number?, duration: number?, modRate: number?, paused: boolean?)
   ---@field FetchSpellCooldown fun(self: SpellCDHandler, id: number): number, number, boolean, number, number
   local function CreateSpellCDHandler()
@@ -2181,6 +2195,7 @@ do
       readyTime = {},
       modRate = {},
       handles = {}, -- Share handles, and use lowest time to schedule
+      readyState = {}, -- whether the spell was ready, values are niled out when spell cd is not a secret
       HandleSpell = HandleSpell,
       FetchSpellCooldown = FetchSpellCooldown
     }
@@ -2375,10 +2390,12 @@ do
       local time = GetTime();
 
       local spellDetail = self.data[effectiveSpellId]
-
-      local chargesChanged = spellDetail.charges ~= charges or spellDetail.count ~= spellCount
-                            or spellDetail.chargesMax ~= maxCharges
-      local chargesDifference = (charges or spellCount or 0) - (spellDetail.charges or spellDetail.count or 0)
+      local chargesChanged, chargesDifference = true, 0
+      if not issecretvalue(spellDetail.charges) and not issecretvalue(charges) and not issecretvalue(spellCount) and not issecretvalue(spellDetail.count) then
+        chargesChanged = spellDetail.charges ~= charges or spellDetail.count ~= spellCount
+          or spellDetail.chargesMax ~= maxCharges
+        chargesDifference = (charges or spellCount or 0) - (spellDetail.charges or spellDetail.count or 0)
+      end
       spellDetail.charges = charges
       spellDetail.chargesMax = maxCharges
       spellDetail.count = spellCount
@@ -2466,7 +2483,6 @@ do
     end,
 
     GetSpellCharges = function(self, effectiveSpellId, ignoreSpellKnown)
-      if C_Secrets.ShouldSpellCooldownBeSecret(effectiveSpellId) then return end
       local spellDetail = self.data[effectiveSpellId]
       if not spellDetail then
         return
@@ -2546,6 +2562,11 @@ do
       cdReadyFrame:RegisterEvent("RUNE_POWER_UPDATE");
       cdReadyFrame:RegisterEvent("RUNE_TYPE_UPDATE");
     end
+
+    Private.callbacks:RegisterCallback("WA_SECRET_STATE_UPDATE", function()
+      cdReadyFrame:HandleEvent("WA_SECRET_STATE_UPDATE")
+    end)
+
     cdReadyFrame.HandleEvent = function(self, event, ...)
       if (event == "PLAYER_ENTERING_WORLD") then
         cdReadyFrame.inWorld = GetTime()
@@ -2583,14 +2604,25 @@ do
       elseif(event == "SPELL_UPDATE_COOLDOWN" or event == "RUNE_POWER_UPDATE"
         or event == "PLAYER_TALENT_UPDATE" or event == "PLAYER_PVP_TALENT_UPDATE"
         or event == "CHARACTER_POINTS_CHANGED" or event == "RUNE_TYPE_UPDATE")
-        or event == "SPELL_UPDATE_USABLE"
+        or event == "SPELL_UPDATE_USABLE" or event == "WA_SECRET_STATE_UPDATE"
       then
         local spellId = nil
         if event == "SPELL_UPDATE_COOLDOWN" then
-          local arg1 = ...
+          local arg1, arg2 = ...
           if arg1 and type(arg1) == "number" then
             spellId = arg1
-            -- baseSpellId = arg2
+            baseSpellId = arg2
+            local effectiveSpellId1 = Private.ExecEnv.GetEffectiveSpellId(spellId)
+            if C_Secrets.ShouldSpellCooldownBeSecret(effectiveSpellId1) then
+              SpellDetails:SendEventsForSpell(effectiveSpellId1, "SPELL_COOLDOWN_CHANGED", effectiveSpellId1)
+
+              if baseSpellId then
+                effectiveSpellId2 = Private.ExecEnv.GetEffectiveSpellId(baseSpellId)
+                if effectiveSpellId1 ~= effectiveSpellId2 then
+                  SpellDetails:SendEventsForSpell(effectiveSpellId2, "SPELL_COOLDOWN_CHANGED", effectiveSpellId2)
+                end
+              end
+            end
           end
           mark_ACTIONBAR_UPDATE_COOLDOWN = nil
         end
@@ -2960,87 +2992,96 @@ do
 
     local charges, maxCharges, startTimeCharges, durationCharges, modRateCharges = GetSpellCharges(id);
 
-    startTimeCooldown = issecretvalue(startTimeCooldown) and 0 or startTimeCooldown or 0
-    durationCooldown = issecretvalue(durationCooldown) and 0 or durationCooldown or 0
+    startTimeCooldown = startTimeCooldown or 0
+    durationCooldown = durationCooldown or 0
 
-    startTimeCharges = issecretvalue(startTimeCharges) and 0 or startTimeCharges or 0
-    durationCharges = issecretvalue(durationCharges) and 0 or durationCharges or 0
-
-    modRate = issecretvalue(modRate) and 1.0 or modRate or 1.0
-    modRateCharges = issecretvalue(modRateCharges) and 1.0 or modRateCharges or 1.0
-
-    if issecretvalue(enabled) then
-      enabled = false
-    end
-
-    if issecretvalue(charges) then
-      charges = nil
-      maxCharges = nil
-    end
-
-    -- WORKAROUND: Sometimes the API returns very high bogus numbers causing client freezes, discard them here. CurseForge issue #1008
-    if (durationCooldown > 604800) then
-      durationCooldown = 0;
-      startTimeCooldown = 0;
-    end
-
-    if (startTimeCooldown > GetTime() + 2^31 / 1000) then
-      -- WORKAROUND: WoW wraps around negative values with 2^32/1000
-      -- So if we find a cooldown in the far future, then undo the wrapping
-      startTimeCooldown = startTimeCooldown - 2^32 / 1000
-    end
+    startTimeCharges = startTimeCharges or 0
+    durationCharges = durationCharges or 0
+    modRate = modRate or 1.0
+    modRateCharges = modRateCharges or 1.0
 
     -- Default to
     ---@type boolean?
     local unifiedCooldownBecauseRune = false
     ---@type boolean?
     local cooldownBecauseRune = false
-    -- Paused cooldowns are:
-    -- Spells like Presence of Mind/Nature's Swiftness that start their cooldown after the effect is consumed
-    -- But also oddly some Evoker spells
-    -- Presence of Might is on 0.0001 enabled == 0 cooldown while prepared
-    -- For Evoker, using an empowered spell puts spells on pause. Some spells are put on an entirely bogus 0.5 paused cd
-    -- Others the real cd (that continues ticking) is paused.
-    -- We treat anything with less than 0.5 as not on cd, and hope for the best.
-    if not enabled and durationCooldown <= 0.5 then
-      startTimeCooldown, durationCooldown, enabled = 0, 0, true
-    end
-
-    local onNonGCDCD = durationCooldown and startTimeCooldown and durationCooldown > 0 and (durationCooldown ~= gcdDuration or startTimeCooldown ~= gcdStart);
-    if (onNonGCDCD) then
-      cooldownBecauseRune = runeDuration and durationCooldown and abs(durationCooldown - runeDuration) < 0.001;
-      unifiedCooldownBecauseRune = cooldownBecauseRune
-    end
-
     local startTime, duration, unifiedModRate = startTimeCooldown, durationCooldown, modRate
-    if (charges == nil) then
-      -- charges is nil if the spell has no charges.
-      -- Nothing to do in that case
-    elseif (charges == maxCharges) then
-      -- At max charges,
-      startTime, duration = 0, 0;
-      startTimeCharges, durationCharges = 0, 0
-    else
-      -- Spells can return both information via GetSpellCooldown and GetSpellCharges
-      -- E.g. Rune of Power see Github-Issue: #1060
-      -- So if GetSpellCooldown returned a cooldown, use that one, if it's a "significant" cooldown
-      --  Otherwise check GetSpellCharges
-      -- A few abilities have a minor cooldown just to prevent the user from triggering it multiple times,
-      -- ignore them since practically no one wants to see them
-      if duration and duration <= 1.5 or (duration == gcdDuration and startTime == gcdStart) then
-        startTime, duration, unifiedModRate = startTimeCharges, durationCharges, modRateCharges
-        unifiedCooldownBecauseRune = false
+
+    if not C_Secrets.ShouldSpellCooldownBeSecret(id) then
+      -- WORKAROUND: Sometimes the API returns very high bogus numbers causing client freezes, discard them here. CurseForge issue #1008
+      if (durationCooldown > 604800) then
+        durationCooldown = 0;
+        startTimeCooldown = 0;
+      end
+
+      if (startTimeCooldown > GetTime() + 2^31 / 1000) then
+        -- WORKAROUND: WoW wraps around negative values with 2^32/1000
+        -- So if we find a cooldown in the far future, then undo the wrapping
+        startTimeCooldown = startTimeCooldown - 2^32 / 1000
+      end
+
+
+      -- Paused cooldowns are:
+      -- Spells like Presence of Mind/Nature's Swiftness that start their cooldown after the effect is consumed
+      -- But also oddly some Evoker spells
+      -- Presence of Might is on 0.0001 enabled == 0 cooldown while prepared
+      -- For Evoker, using an empowered spell puts spells on pause. Some spells are put on an entirely bogus 0.5 paused cd
+      -- Others the real cd (that continues ticking) is paused.
+      -- We treat anything with less than 0.5 as not on cd, and hope for the best.
+      if not enabled and durationCooldown <= 0.5 then
+        startTimeCooldown, durationCooldown, enabled = 0, 0, true
+      end
+
+      local onNonGCDCD = durationCooldown and startTimeCooldown and durationCooldown > 0 and (durationCooldown ~= gcdDuration or startTimeCooldown ~= gcdStart);
+      if (onNonGCDCD) then
+        cooldownBecauseRune = runeDuration and durationCooldown and abs(durationCooldown - runeDuration) < 0.001;
+        unifiedCooldownBecauseRune = cooldownBecauseRune
+      end
+
+      if (charges == nil) then
+        -- charges is nil if the spell has no charges.
+        -- Nothing to do in that case
+      elseif (charges == maxCharges) then
+        -- At max charges,
+        startTime, duration = 0, 0;
+        startTimeCharges, durationCharges = 0, 0
+      else
+        -- Spells can return both information via GetSpellCooldown and GetSpellCharges
+        -- E.g. Rune of Power see Github-Issue: #1060
+        -- So if GetSpellCooldown returned a cooldown, use that one, if it's a "significant" cooldown
+        --  Otherwise check GetSpellCharges
+        -- A few abilities have a minor cooldown just to prevent the user from triggering it multiple times,
+        -- ignore them since practically no one wants to see them
+        if duration and duration <= 1.5 or (duration == gcdDuration and startTime == gcdStart) then
+          startTime, duration, unifiedModRate = startTimeCharges, durationCharges, modRateCharges
+          unifiedCooldownBecauseRune = false
+        end
       end
     end
 
     local count = GetSpellCount(id)
-    if issecretvalue(count) then
-      count = 0
+
+    local disabled
+    if issecretvalue(enabled) then
+      disabled = false
+    else
+      disabled = not enabled
     end
 
     return charges, maxCharges, startTime, duration, unifiedCooldownBecauseRune,
            startTimeCooldown, durationCooldown, cooldownBecauseRune, startTimeCharges, durationCharges,
-           count, unifiedModRate, modRate, modRateCharges, not enabled
+           count, unifiedModRate, modRate, modRateCharges, disabled
+  end
+
+  ---@type fun(id): durationObject:userdata, isReady:boolean
+  function WeakAuras.GetSpellCooldownDuration(id)
+    local cooldownInfo = C_Spell.GetSpellCooldown(id)
+    if not cooldownInfo then
+      return nil, nil
+    end
+    local durationObject = C_Spell.GetSpellChargeDuration(id)
+    local isReady = cooldownInfo.timeUntilEndOfStartRecovery == nil
+    return durationObject, isReady
   end
 
   ---@type fun(id, runeDuration)
