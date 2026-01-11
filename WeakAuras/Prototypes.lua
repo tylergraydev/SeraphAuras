@@ -4230,7 +4230,8 @@ Private.event_prototypes = {
         end
         local durationObject, isReady
         if isSecret then
-          durationObject, isReady = WeakAuras.GetSpellCooldownDuration(effectiveSpellId)
+          durationObject = WeakAuras.GetSpellCooldownDuration(effectiveSpellId)
+          isReady = WeakAuras.IsSpellReady(effectiveSpellId)
         end
         if showlossofcontrol and startTime and duration then
           local locStart, locDuration = WeakAuras.GetSpellLossOfControlCooldown(spellname);

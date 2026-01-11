@@ -2074,14 +2074,10 @@ do
     local changed = false
     local nowReady = false
     if C_Secrets.ShouldSpellCooldownBeSecret(id) then
-      local cooldownInfo = C_Spell.GetSpellCooldown(id)
-      if cooldownInfo then
-        isReady = cooldownInfo.timeUntilEndOfStartRecovery == nil
-        local wasReady = self.readyState[id]
-        changed = isReady ~= wasReady
-        self.readyState[id] = isReady
-        return changed, isReady
-      end
+      local isReady = WeakAuras.IsSpellReady(id)
+      changed = self.readyState[id] ~= isReady
+      self.readyState[id] = isReady
+      return changed, isReady
     else
       self.readyState[id] = nil
     end
@@ -3073,15 +3069,24 @@ do
            count, unifiedModRate, modRate, modRateCharges, disabled
   end
 
-  ---@type fun(id): durationObject:userdata, isReady:boolean
-  function WeakAuras.GetSpellCooldownDuration(id)
+  ---@type fun(id): boolean|nil
+  function WeakAuras.IsSpellReady(id)
     local cooldownInfo = C_Spell.GetSpellCooldown(id)
     if not cooldownInfo then
-      return nil, nil
+      return nil
     end
-    local durationObject = C_Spell.GetSpellChargeDuration(id)
-    local isReady = cooldownInfo.timeUntilEndOfStartRecovery == nil
-    return durationObject, isReady
+
+    -- should cover off gcd spells as well as normal spells
+    if cooldownInfo.isOnGCD == nil then
+      return cooldownInfo.timeUntilEndOfStartRecovery == nil
+    else
+      return cooldownInfo.isOnGCD == true
+    end
+  end
+
+  ---@type fun(id): durationObject:userdata
+  function WeakAuras.GetSpellCooldownDuration(id)
+    return C_Spell.GetSpellChargeDuration(id) or C_Spell.GetSpellCooldownDuration(id)
   end
 
   ---@type fun(id, runeDuration)
