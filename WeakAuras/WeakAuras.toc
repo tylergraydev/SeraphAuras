@@ -58,6 +58,7 @@ LibSpecializationWrapper.lua
 BuffTrigger2.lua
 GenericTrigger.lua
 BossMods.lua
+TimelineParser.lua
 
 # Helper Systems
 TSUHelpers.lua
