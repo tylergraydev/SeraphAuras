@@ -1589,7 +1589,13 @@ Private.font_flags = {
   OUTLINE = L["Outline"],
   THICKOUTLINE  = L["Thick Outline"],
   ["MONOCHROME|OUTLINE"] = L["Monochrome Outline"],
-  ["MONOCHROME|THICKOUTLINE"] = L["Monochrome Thick Outline"]
+  ["MONOCHROME|THICKOUTLINE"] = L["Monochrome Thick Outline"],
+  ["SLUG"] = L["SLUG"],
+  ["MONOCHROME|SLUG"] = L["Monochrome SLUG"],
+  ["OUTLINE|SLUG"] = L["Outline SLUG"],
+  ["THICKOUTLINE|SLUG"] = L["Thick Outline SLUG"],
+  ["MONOCHROME|OUTLINE|SLUG"] = L["Monochrome Outline SLUG"],
+  ["MONOCHROME|THICKOUTLINE|SLUG"] = L["Monochrome Thick Outline SLUG"],
 }
 
 ---@type table<string, string>
