@@ -1350,7 +1350,12 @@ function Private.Login(takeNewSnapshots)
     -- debug = true,
   }
 
-  local thread = Private:Async(loginThreadConfig, loginFunc)
+  local thread = Private:Async(loginThreadConfig, loginFunc):OnSuccess(function()
+    Private.callbacks:Fire("WEAKAURAS_LOGIN_COMPLETE")
+    if GREMINDER and GREMINDER.FireCallback then
+      GREMINDER:FireCallback("WEAKAURAS_LOGIN_COMPLETE")
+    end
+  end)
   thread:ForceRun(12000)
 end
 
