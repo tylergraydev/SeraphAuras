@@ -2302,15 +2302,18 @@ do
               -- For the new effective spell id
               self:AddEffectiveSpellId(newEffectiveSpellId, userSpellId)
 
-              local oldSpellDetail = self.data[oldEffectiveSpellId]
-              local newSpellDetail = self.data[newEffectiveSpellId]
+              local oldSpellDetail = self.data[oldEffectiveSpellId] or {}
+              local newSpellDetail = self.data[newEffectiveSpellId] or {}
 
               -- Check whether we need to emit the SPELL_CHARGES_CHANGED or SPELL_COOLDOWN_READY events
               local chargesChanged = oldSpellDetail.charges ~= newSpellDetail.charges or oldSpellDetail.count ~= newSpellDetail.count
                 or oldSpellDetail.chargesMax ~= newSpellDetail.maxCharges
               local oldCharge = oldSpellDetail.charges or oldSpellDetail.count or 0
               local newCharge = newSpellDetail.charges or newSpellDetail.count or 0
-              local chargesDifference = newCharge - oldCharge
+              local chargesDifference = 0
+              if not hasanysecretvalues(oldCharge, newCharge) then
+                chargesDifference = newCharge - oldCharge
+              end
 
               local nowReady = not self.spellCdsOnlyCooldown.readyTime[oldEffectiveSpellId]
                                and self.spellCdsOnlyCooldown.readyTime[newEffectiveSpellId]
