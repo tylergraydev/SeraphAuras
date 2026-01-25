@@ -2305,11 +2305,10 @@ do
               local oldSpellDetail = self.data[oldEffectiveSpellId]
               local newSpellDetail = self.data[newEffectiveSpellId]
               if oldSpellDetail and newSpellDetail then
-
-
                 -- Check whether we need to emit the SPELL_CHARGES_CHANGED or SPELL_COOLDOWN_READY events
-                local chargesChanged = oldSpellDetail.charges ~= newSpellDetail.charges or oldSpellDetail.count ~= newSpellDetail.count
-                  or oldSpellDetail.chargesMax ~= newSpellDetail.maxCharges
+                local chargesChanged = hasanysecretvalues(oldSpellDetail.charges, newSpellDetail.charges) or oldSpellDetail.charges ~= newSpellDetail.charges or
+                  hasanysecretvalues(oldSpellDetail.count, newSpellDetail.count) or oldSpellDetail.count ~= newSpellDetail.count or
+                  hasanysecretvalues(oldSpellDetail.chargesMax, newSpellDetail.chargesMax) or oldSpellDetail.chargesMax ~= newSpellDetail.chargesMax
                 local oldCharge = oldSpellDetail.charges or oldSpellDetail.count or 0
                 local newCharge = newSpellDetail.charges or newSpellDetail.count or 0
                 local chargesDifference = 0
