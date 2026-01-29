@@ -29,7 +29,7 @@ VALID_ROLES = {
   1323828198479233054, # thankyou
 }
 
-MSG = """React to this message to have your name included in the Thanks list inside the WeakAuras GUI.
+MSG = """React to this message to have your name included in the Thanks list inside the M33Auras GUI.
 The bot runs every monday, and you have to be a member of the discord for the bot to verify your status.
 
 Note, that most symbols are filtered. Pure Latin, Chinese or Korean should be fine.
@@ -161,8 +161,8 @@ class DiscordNameGather(discord.Client):
     knames = filter(lambda n: not has_cj(n) and has_k(n), names)
     latinnames = filter(lambda n: not has_cj(n) and not has_k(n), names)
 
-    discordListFile = open("WeakAuras/DiscordList.lua", "w", encoding="utf-8")
-    discordListFile.write("if not WeakAuras.IsLibsOK() then return end\n")
+    discordListFile = open("M33Auras/DiscordList.lua", "w", encoding="utf-8")
+    discordListFile.write("if not M33Auras.IsLibsOK() then return end\n")
     discordListFile.write("---@type string\n")
     discordListFile.write("local AddonName = ...\n")
     discordListFile.write("---@class Private\n")

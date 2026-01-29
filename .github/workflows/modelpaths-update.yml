@@ -1,4 +1,4 @@
-name: Create WeakAurasModelPaths Update Pull Request
+name: Create M33AurasModelPaths Update Pull Request
 
 on:
   schedule:
@@ -7,13 +7,13 @@ on:
 
 jobs:
   modelPathsUpdate:
-    if: github.repository == 'WeakAuras/WeakAuras2'
+    if: github.repository == 'm33shoq/M33Auras'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: leafo/gh-actions-lua@v12
 
-      - name: Update WeakAurasModelPaths from wago.tools
+      - name: Update M33AurasModelPaths from wago.tools
         run: |
           cd .github/scripts/
           ./update-model-paths.sh
@@ -23,7 +23,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: update-modelpaths
-          commit-message: Update WeakAurasModelPaths from wago.tools
-          title: Update WeakAurasModelPaths from wago.tools
-          body: Update WeakAurasModelPaths from wago.tools
+          commit-message: Update M33AurasModelPaths from wago.tools
+          title: Update M33AurasModelPaths from wago.tools
+          body: Update M33AurasModelPaths from wago.tools
           delete-branch: true

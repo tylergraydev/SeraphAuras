@@ -34,16 +34,16 @@ fi
 git shortlog --no-merges --reverse "$previous..$current" | sed -e  '/^\w/G' -e 's/^      /- /' >> "CHANGELOG.md"
 
 # Changelog.lua
-echo -ne "if not WeakAuras.IsLibsOK() then return end\n---@type string\nlocal AddonName = ...\n---@class OptionsPrivate\nlocal OptionsPrivate = select(2, ...)\n" >> "WeakAurasOptions/Changelog.lua"
-echo -ne "OptionsPrivate.changelog = {\n" >> "WeakAurasOptions/Changelog.lua"
-echo -ne "  versionString = '$version',\n" >> "WeakAurasOptions/Changelog.lua"
-echo -ne "  dateString = '$date',\n" >> "WeakAurasOptions/Changelog.lua"
-echo -ne "  fullChangeLogUrl = '${url}/compare/${previous}...${current}',\n" >> "WeakAurasOptions/Changelog.lua"
+echo -ne "if not M33Auras.IsLibsOK() then return end\n---@type string\nlocal AddonName = ...\n---@class OptionsPrivate\nlocal OptionsPrivate = select(2, ...)\n" >> "M33AurasOptions/Changelog.lua"
+echo -ne "OptionsPrivate.changelog = {\n" >> "M33AurasOptions/Changelog.lua"
+echo -ne "  versionString = '$version',\n" >> "M33AurasOptions/Changelog.lua"
+echo -ne "  dateString = '$date',\n" >> "M33AurasOptions/Changelog.lua"
+echo -ne "  fullChangeLogUrl = '${url}/compare/${previous}...${current}',\n" >> "M33AurasOptions/Changelog.lua"
 if [ "$version" = "$tag" ]; then # on a tag
-  echo -ne "  highlightText = [==[\n" >> "WeakAurasOptions/Changelog.lua"
-  echo -ne "$highlights" >> "WeakAurasOptions/Changelog.lua"
-  echo -ne "]==]," >> "WeakAurasOptions/Changelog.lua"
+  echo -ne "  highlightText = [==[\n" >> "M33AurasOptions/Changelog.lua"
+  echo -ne "$highlights" >> "M33AurasOptions/Changelog.lua"
+  echo -ne "]==]," >> "M33AurasOptions/Changelog.lua"
 fi
-echo -ne "  commitText = [==[" >> "WeakAurasOptions/Changelog.lua"
-git shortlog --no-merges --reverse "$previous..$current" | sed -e  '/^\w/G' -e 's/^      /- /' >> "WeakAurasOptions/Changelog.lua"
-echo -ne "]==]\n}" >> "WeakAurasOptions/Changelog.lua"
+echo -ne "  commitText = [==[" >> "M33AurasOptions/Changelog.lua"
+git shortlog --no-merges --reverse "$previous..$current" | sed -e  '/^\w/G' -e 's/^      /- /' >> "M33AurasOptions/Changelog.lua"
+echo -ne "]==]\n}" >> "M33AurasOptions/Changelog.lua"

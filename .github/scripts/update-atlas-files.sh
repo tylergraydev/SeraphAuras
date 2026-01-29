@@ -9,6 +9,6 @@ do
   lua ./atlas_update.lua ${version}
 done
 
-mv Atlas_Vanilla.lua ../../WeakAuras/
-mv Atlas_Wrath.lua ../../WeakAuras/
-mv Atlas_Cata.lua ../../WeakAuras/
+mv Atlas_Vanilla.lua ../../M33Auras/
+mv Atlas_Wrath.lua ../../M33Auras/
+mv Atlas_Cata.lua ../../M33Auras/

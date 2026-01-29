@@ -1,6 +1,6 @@
-# [5.15.0](https://github.com/WeakAuras/WeakAuras2/tree/5.15.0) (2024-03-23)
+# [5.15.0](https://github.com/m33shoq/M33Auras/tree/5.15.0) (2024-03-23)
 
-[Full Changelog](https://github.com/WeakAuras/WeakAuras2/compare/5.11.2...5.15.0)
+[Full Changelog](https://github.com/m33shoq/M33Auras/compare/5.11.2...5.15.0)
 
 ## Highlights
 

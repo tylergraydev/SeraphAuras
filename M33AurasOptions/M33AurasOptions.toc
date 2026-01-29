@@ -1,0 +1,115 @@
+## Interface: 120000, 120001
+## Title: M33Auras Options
+## Author: m33shoq
+## Version: @project-version@
+## IconTexture: Interface\AddOns\M33Auras\Media\Textures\icon.blp
+## Notes: Options for M33Auras
+## Notes-esES: Opciones para M33Auras
+## Notes-esMX: Opciones para M33Auras
+## Notes-deDE: Optionen für M33Auras
+## Notes-ruRU: Опции M33Auras
+## Notes-zhTW: M33Auras的設定
+## X-Category: Interface Enhancements
+## Globe-Main: M33Auras
+## DefaultState: Enabled
+## LoadOnDemand: 1
+## Dependencies: M33Auras
+## SavedVariables: M33AurasOptionsSaved
+
+embeds.xml
+locales.xml
+
+VersionCheck.lua
+ForAllIndentsAndPurposes.lua
+
+RegionOptions\Empty.lua
+RegionOptions\AuraBar.lua
+RegionOptions\Texture.lua
+RegionOptions\Icon.lua
+RegionOptions\Text.lua
+RegionOptions\Group.lua
+RegionOptions\DynamicGroup.lua
+RegionOptions\StopMotion.lua
+RegionOptions\Model.lua
+RegionOptions\ProgressTexture.lua
+
+SubRegionOptions\SubRegionCommon.lua
+SubRegionOptions\Background.lua
+SubRegionOptions\SubText.lua
+SubRegionOptions\Border.lua
+SubRegionOptions\Glow.lua
+SubRegionOptions\Tick.lua
+SubRegionOptions\Model.lua
+SubRegionOptions\StopMotion.lua
+SubRegionOptions\Texture.lua
+SubRegionOptions\CircularProgressTexture.lua
+SubRegionOptions\LinearProgressTexture.lua
+
+Cache.lua
+
+CommonOptions.lua
+GroupOptions.lua
+DisplayOptions.lua
+TriggerOptions.lua
+LoadOptions.lua
+ActionOptions.lua
+AnimationOptions.lua
+InformationOptions.lua
+
+BuffTrigger2.lua
+GenericTrigger.lua
+
+M33AurasOptions.lua
+ConditionOptions.lua
+AuthorOptions.lua
+
+Changelog.lua
+
+OptionsFrames\OptionsFrame.lua
+
+# Groups
+OptionsFrames\CodeReview.lua
+OptionsFrames\IconPicker.lua
+OptionsFrames\ImportExport.lua
+OptionsFrames\ModelPicker.lua
+OptionsFrames\TextEditor.lua
+OptionsFrames\TexturePicker.lua
+OptionsFrames\Update.lua
+OptionsFrames\DebugLogFrame.lua
+
+# Misc frames
+OptionsFrames\MoverSizer.lua
+OptionsFrames\FrameChooser.lua
+
+AceGUI-Widgets\AceGUIWidget-M33AurasExpand.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasExpandSmall.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasIcon.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasNewHeaderButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasLoadedHeaderButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasDisplayButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasDropDownItemCurrency.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasPendingInstallButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasPendingUpdateButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasTextureButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasIconButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasMultiLineEditBox.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasMultiLineEditBoxWithEnter.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasNewButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasImportButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasToolbarButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasTwoColumnDropDown.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasSnippetButton.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasAnchorButtons.lua
+AceGUI-Widgets\AceGUIContainer-M33AurasTreeGroup.lua
+AceGUI-Widgets\AceGUIContainer-M33AurasInlineGroup.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasExpandAnchor.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasSpacer.lua
+AceGUI-Widgets\AceGuiWidget-M33AurasProgressBar.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasSpinBox.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasMiniTalent_TWW.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasScrollArea.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasInput.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasInputFocus.lua
+AceGUI-Widgets\AceGUIWidget-M33AurasInputWithIndentation.lua
+AceGUI-Widgets\AceGuiWidget-M33AurasMediaSound.lua
+AceGUI-Widgets\M33AurasStatusbarAtlasWidget.lua

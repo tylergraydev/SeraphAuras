@@ -5,10 +5,10 @@ import re
 import subprocess
 from pathlib import Path
 
-WEAKAURAS_URL_RELEASE_URL = "https://github.com/WeakAuras/WeakAuras2/releases/tag/{tag}"
+M33Auras_URL_RELEASE_URL = "https://github.com/m33shoq/M33Auras/releases/tag/{tag}"
 MAX_POST_LENGTH = 280
 
-POST_TEMPLATE = """WeakAuras {tag} released:
+POST_TEMPLATE = """M33Auras {tag} released:
 
 {highlight_content}
 
@@ -18,7 +18,7 @@ POST_TEMPLATE = """WeakAuras {tag} released:
 
 def get_empty_post_length():
     tag = get_latest_tag()
-    release_url = WEAKAURAS_URL_RELEASE_URL.format(tag=tag)
+    release_url = M33Auras_URL_RELEASE_URL.format(tag=tag)
     post = POST_TEMPLATE.format(tag=tag, highlight_content="", url=release_url)
     return len(post)
 
@@ -76,7 +76,7 @@ def get_latest_tag():
 def generate_twitter_post(content):
     print("generating post")
     tag = get_latest_tag()
-    release_url = WEAKAURAS_URL_RELEASE_URL.format(tag=tag)
+    release_url = M33Auras_URL_RELEASE_URL.format(tag=tag)
     post = POST_TEMPLATE.format(tag=tag, highlight_content=content, url=release_url)
     return post
 

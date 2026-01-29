@@ -10,9 +10,9 @@ fi
 [ -z "$cf_token" ] && cf_token=$CF_API_KEY
 
 declare -A locale_files=(
-  ["WeakAuras"]="WeakAuras_Main.lua"
-  ["WeakAuras/Options"]="WeakAuras_Options.lua"
-  ["WeakAuras/Templates"]="WeakAuras_Templates.lua"
+  ["M33Auras"]="M33Auras_Main.lua"
+  ["M33Auras/Options"]="M33Auras_Options.lua"
+  ["M33Auras/Templates"]="M33Auras_Templates.lua"
 )
 
 tempfile=$( mktemp )

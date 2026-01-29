@@ -7,7 +7,7 @@ on:
 
 jobs:
   discordUpdate:
-    if: github.repository == 'WeakAuras/WeakAuras2'
+    if: github.repository == 'm33shoq/M33Auras'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -39,5 +39,5 @@ jobs:
           title: Update Discord List
           body: ${{ steps.readCommitBody.outputs.text }}
           delete-branch: true
-          add-paths: WeakAuras/DiscordList.lua
+          add-paths: M33Auras/DiscordList.lua
 
