@@ -3043,25 +3043,25 @@ end
 
 local matchCombineFunctions = {
   showHighest = function(bestMatch, auraMatch)
-    if bestMatch.expirationTime and auraMatch.expirationTime then
+    if not hasanysecretvalues(auraMatch.expirationTime, bestMatch.expirationTime) and bestMatch.expirationTime and auraMatch.expirationTime then
       return auraMatch.expirationTime > bestMatch.expirationTime
     end
     return true
   end,
   showLowest = function(bestMatch, auraMatch)
-    if bestMatch.expirationTime and auraMatch.expirationTime then
+    if not hasanysecretvalues(auraMatch.expirationTime, bestMatch.expirationTime) and bestMatch.expirationTime and auraMatch.expirationTime then
       return auraMatch.expirationTime < bestMatch.expirationTime
     end
     return false
   end,
   showLowestSpellId  = function(bestMatch, auraMatch)
-    if bestMatch.spellId and auraMatch.spellId then
+    if not hasanysecretvalues(auraMatch.spellId, bestMatch.spellId) and bestMatch.spellId and auraMatch.spellId then
       return auraMatch.spellId < bestMatch.spellId
     end
     return false
   end,
   showHighestSpellId  = function(bestMatch, auraMatch)
-    if bestMatch.spellId and auraMatch.spellId then
+    if not hasanysecretvalues(auraMatch.spellId, bestMatch.spellId) and bestMatch.spellId and auraMatch.spellId then
       return auraMatch.spellId > bestMatch.spellId
     end
     return false
