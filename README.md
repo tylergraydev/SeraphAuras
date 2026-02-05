@@ -1,12 +1,12 @@
 <div align="center">
 
-# M33Auras
+# M33kAuras
 
-[![Build Status](https://github.com/m33shoq/M33Auras/workflows/CI/badge.svg)](https://github.com/m33shoq/M33Auras/actions?workflow=CI)
+[![Build Status](https://github.com/m33shoq/M33kAuras/workflows/CI/badge.svg)](https://github.com/m33shoq/M33kAuras/actions?workflow=CI)
 
 </div>
 
-M33Auras is a powerful and flexible framework that allows the display of highly customizable graphics on World of Warcraft's user interface to indicate buffs, debuffs, and other relevant information. This addon was created to be a lightweight replacement for Power Auras but has since introduced more functionalities while remaining efficient and easy to use.
+M33kAuras is a powerful and flexible framework that allows the display of highly customizable graphics on World of Warcraft's user interface to indicate buffs, debuffs, and other relevant information. This addon was created to be a lightweight replacement for Power Auras but has since introduced more functionalities while remaining efficient and easy to use.
 
 ## Features
 
@@ -22,6 +22,6 @@ M33Auras is a powerful and flexible framework that allows the display of highly 
 
 ## Quick Start
 
-To open the options window, type `/m33auras` or `/wa` into your chat and hit enter or use the minimap icon.
+To open the options window, type `/M33kAuras` or `/wa` into your chat and hit enter or use the minimap icon.
 
-General information on midnight compatibility listed here https://github.com/m33shoq/M33Auras/pull/8
+General information on midnight compatibility listed here https://github.com/m33shoq/M33kAuras/pull/8

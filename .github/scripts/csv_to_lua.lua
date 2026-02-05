@@ -144,7 +144,7 @@ if info and info.generate then
   end
 
   local outputFile = io.open(info.output, "w")
-  outputFile:write("M33Auras.ModelPaths = " .. serializeTable(models))
+  outputFile:write("M33kAuras.ModelPaths = " .. serializeTable(models))
   io.close(outputFile)
   print(info.output, "built")
 else

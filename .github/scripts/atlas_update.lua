@@ -55,7 +55,7 @@ end
 table.sort(sortedNames)
 
 local output = io.open(outputFileName, "w+")
-output:write("if not M33Auras.IsLibsOK() then return end\n")
+output:write("if not M33kAuras.IsLibsOK() then return end\n")
 output:write("---@type string\n")
 output:write("local AddonName = ...\n")
 output:write("---@class Private\n")

@@ -10,9 +10,9 @@ fi
 [ -z "$cf_token" ] && cf_token=$CF_API_KEY
 
 declare -A locale_files=(
-  ["M33Auras"]="M33Auras_Main.lua"
-  ["M33Auras/Options"]="M33Auras_Options.lua"
-  ["M33Auras/Templates"]="M33Auras_Templates.lua"
+  ["M33kAuras"]="M33kAuras_Main.lua"
+  ["M33kAuras/Options"]="M33kAuras_Options.lua"
+  ["M33kAuras/Templates"]="M33kAuras_Templates.lua"
 )
 
 tempfile=$( mktemp )

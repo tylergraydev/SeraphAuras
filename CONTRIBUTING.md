@@ -1,4 +1,4 @@
-# Contributing to M33Auras
+# Contributing to M33kAuras
 
 ## Code Standards
 
@@ -9,16 +9,16 @@ There are a few things which we require in any contribution:
   - Files end with a newline.
   - No trailing whitespace at the end of a line.
 - All user-facing strings (`names` and `desc` fields in AceConfig tables, mostly) must be localized:
-  - We use a locale scraper to find translation phrases and automatically export them to CurseForge for translation. This scraper parses the addon files, looking for tokens that look like: `L["some translation phrase"]`. You must use double quoted strings, and name the localization table (found at `M33Auras.L`) `L` in your code for this to work properly.
+  - We use a locale scraper to find translation phrases and automatically export them to CurseForge for translation. This scraper parses the addon files, looking for tokens that look like: `L["some translation phrase"]`. You must use double quoted strings, and name the localization table (found at `M33kAuras.L`) `L` in your code for this to work properly.
 - When writing a new file, avoid using semicolons. When modifying code in an existing file, try to be consistent, but err on the side of no semicolons.
-- New features should be indicated by concatenating `M33Auras.newFeatureString` onto the associated translation phrase. We will remove the new feature indicator approximately 3 months after the first release.
+- New features should be indicated by concatenating `M33kAuras.newFeatureString` onto the associated translation phrase. We will remove the new feature indicator approximately 3 months after the first release.
 
 ## Pull Requests
 
 If you want to help, here's what you need to do:
 
 1. Make sure you have a [GitHub account](https://github.com/signup/free).
-1. [Fork](https://github.com/m33shoq/M33Auras/fork) our repository.
+1. [Fork](https://github.com/m33shoq/M33kAuras/fork) our repository.
 
 1. Create a new topic branch (based on the `main` branch) to contain your feature, change, or fix.
 
@@ -40,7 +40,7 @@ If you want to help, here's what you need to do:
 
 1. Set up your [Git identity](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup) so your commits are attributed to your name and email address properly.
 
-1. Take a look at our [Wiki](https://github.com/m33shoq/M33Auras/wiki/Lua-Dev-Environment) page on how to setup a Lua dev environment.
+1. Take a look at our [Wiki](https://github.com/m33shoq/M33kAuras/wiki/Lua-Dev-Environment) page on how to setup a Lua dev environment.
 
 1. Install an [EditorConfig](https://editorconfig.org/) plugin for your text editor to automatically follow our indenting rules.
 
@@ -51,17 +51,17 @@ If you want to help, here's what you need to do:
     git push
     ```
 
-1. [Open a Pull Request](https://github.com/m33shoq/M33Auras/pulls) with a clear title and description.
+1. [Open a Pull Request](https://github.com/m33shoq/M33kAuras/pulls) with a clear title and description.
 
 ### Keeping your fork updated
 
 - Specify a new remote upstream repository that will be used to sync your fork (you only need to do this once).
 
   ```bash
-  git remote add upstream https://github.com/m33shoq/M33Auras.git
+  git remote add upstream https://github.com/m33shoq/M33kAuras.git
   ```
 
-- In order to sync your fork with the upstream M33Auras repository you would do
+- In order to sync your fork with the upstream M33kAuras repository you would do
 
   ```bash
   git fetch upstream
@@ -73,7 +73,7 @@ If you want to help, here's what you need to do:
 
 ### Keeping your pull request updated
 
-- In order to sync your pull request with the upstream M33Auras repository in case there are any conflicts you would do
+- In order to sync your pull request with the upstream M33kAuras repository in case there are any conflicts you would do
 
   ```bash
   git fetch upstream
@@ -94,11 +94,11 @@ If you want to help, here's what you need to do:
 
 ## Reporting Issues and Requesting Features
 
-1. Please check our [issue tracker](https://github.com/m33shoq/M33Auras/issues) for your problem since there's a good
+1. Please check our [issue tracker](https://github.com/m33shoq/M33kAuras/issues) for your problem since there's a good
    chance that someone has already reported it.
 1. If you find a match, please try to provide as much info as you can,
    so that we have a better picture about what the real problem is and how to fix it ASAP.
 1. If you didn't find any tickets with a problem similar to yours then please open a
-   [new ticket](https://github.com/m33shoq/M33Auras/issues/new/choose).
+   [new ticket](https://github.com/m33shoq/M33kAuras/issues/new/choose).
     - Be descriptive as much as you can.
     - Provide everything the template text asks you for.

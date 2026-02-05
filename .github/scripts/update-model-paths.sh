@@ -39,4 +39,4 @@ do
   update_model_paths "$branch"
 done
 
-mv ModelPaths*.lua ../../M33AurasModelPaths/
+mv ModelPaths*.lua ../../M33kAurasModelPaths/

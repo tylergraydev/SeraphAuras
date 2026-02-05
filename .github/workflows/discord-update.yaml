@@ -7,7 +7,7 @@ on:
 
 jobs:
   discordUpdate:
-    if: github.repository == 'm33shoq/M33Auras'
+    if: github.repository == 'm33shoq/M33kAuras'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -39,5 +39,5 @@ jobs:
           title: Update Discord List
           body: ${{ steps.readCommitBody.outputs.text }}
           delete-branch: true
-          add-paths: M33Auras/DiscordList.lua
+          add-paths: M33kAuras/DiscordList.lua
 

@@ -31,13 +31,13 @@ jobs:
         run: ./generate_changelog.sh
 
       - name: Update Build Date
-        run: sed -i "s/@build-time@/`date +%Y%m%d%H%M%S`/" M33Auras/Init.lua
+        run: sed -i "s/@build-time@/`date +%Y%m%d%H%M%S`/" M33kAuras/Init.lua
 
       - name: Flag Non-Experimental Build
         run: |
           sed -i \
           -e "s/--@experimental@/--\[=====\[@experimental@/" \
-          -e "s/--@end-experimental@/--@end-experimental@\]=====\]/" M33Auras/Init.lua
+          -e "s/--@end-experimental@/--@end-experimental@\]=====\]/" M33kAuras/Init.lua
 
       - name: Create Package
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
@@ -58,7 +58,7 @@ jobs:
 
       - uses: actions/upload-artifact@v5
         with:
-          name: M33Auras-DF
+          name: M33kAuras-DF
           path: .release/
 
       - name: Send Status to Discord

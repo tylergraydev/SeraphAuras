@@ -1,5 +1,5 @@
 nomatches:
-- contains: "Which version of M33Auras are you using?" # Checks the entire issue for a substring match.
+- contains: "Which version of M33kAuras are you using?" # Checks the entire issue for a substring match.
   addLabels: ["\U0001F41B Bug"]
 
 - contains: "Is your feature request related to a problem? Please describe."

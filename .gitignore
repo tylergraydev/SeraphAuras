@@ -1,9 +1,9 @@
 .env
-M33Auras_Main.lua
-M33Auras_Options.lua
-M33Auras_Templates.lua
-M33Auras/Libs/*
-M33AurasOptions/Libs/*
+M33kAuras_Main.lua
+M33kAuras_Options.lua
+M33kAuras_Templates.lua
+M33kAuras/Libs/*
+M33kAurasOptions/Libs/*
 format.bat
 **/desktop.ini
 .DS_Store
