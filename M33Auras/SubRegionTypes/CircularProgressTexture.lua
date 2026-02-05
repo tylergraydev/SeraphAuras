@@ -40,6 +40,8 @@ local default = function(parentType)
     defaults.anchor_area = "ALL"
   end
 
+  Private.subRegionPrototype.AddAlphaToDefault(defaults, "circularTexture")
+
   return defaults
 end
 
@@ -103,6 +105,9 @@ local properties = {
     isPercent = true,
   },
 }
+
+Private.subRegionPrototype.AddAlphaProperties(properties, "circularTexture")
+Private.subRegionPrototype.AddColorFromBooleanProperty(properties, "circularTexture", "circularTextureColor")
 
 --- @class CircularProgressSubElement
 --- @field circularTexture CircularProgressTextureInstance
@@ -317,6 +322,7 @@ local function modify(parent, region, parentData, data, first)
   region.FrameTick = nil
   parent.subRegionEvents:AddSubscriber("Update", region)
 
+  region:SetAlpha(1)
   region:SetVisible(data.circularTextureVisible)
   region:SetAngles(data.circularTextureStartAngle, data.circularTextureEndAngle)
   region:SetClockwise(data.circularTextureClockwise)

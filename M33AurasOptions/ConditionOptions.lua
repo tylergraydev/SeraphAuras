@@ -247,8 +247,11 @@ end
 
 local dynamicTextInputs = {}
 
-local function addControlsForChange(args, order, data, conditionVariable, totalAuraCount, conditions, i, j, allProperties, usedProperties)
+local function addControlsForChange(args, order, data, conditionVariable, totalAuraCount, conditions, i, j, allProperties, usedProperties, conditionTemplates)
   local thenText = (j == 1) and L["Then "] or L["And "];
+  local property = conditions[i].changes[j].property;
+  local propertyData = property and allProperties.propertyMap[property] or nil
+  local propertyType = propertyData and propertyData.type or nil
   local display = isSubset(data, conditions[i].changes[j], totalAuraCount) and allProperties.displayWithCopy or allProperties.display;
   local valuesForProperty = filterUsedProperties(allProperties.indexToProperty, display, usedProperties, conditions[i].changes[j].property);
   args["condition" .. i .. "property" .. j] = {
@@ -486,12 +489,255 @@ local function addControlsForChange(args, order, data, conditionVariable, totalA
     end
   end
 
-  local propertyType;
-  local property = conditions[i].changes[j].property;
-  if (property) then
-    propertyType = allProperties.propertyMap[property] and allProperties.propertyMap[property].type;
+  local function isSelectableBooleanTemplate(template)
+    return template
+      and (template.type == "bool" or template.type == "alwaystrue" or template.type == "tristate")
+      and not template.hidden
+      and not template.test
+      and not template.globalStateUpdate
   end
-  if (propertyType == "bool" or propertyType == "number") then
+
+  local function buildBooleanConditionValues(conditionTemplates)
+    local values = {}
+    local indexToTrigger = {}
+    local indexToVariable = {}
+    local keyToIndex = {}
+    local pendingHeader
+    if conditionTemplates and conditionTemplates.display then
+      for index, label in ipairs(conditionTemplates.display) do
+        local trigger = conditionTemplates.indexToTrigger[index]
+        local variable = conditionTemplates.indexToVariable[index]
+        if not trigger then
+          pendingHeader = label
+        else
+          local template = conditionTemplates.all
+            and conditionTemplates.all[trigger]
+            and conditionTemplates.all[trigger][variable]
+          if isSelectableBooleanTemplate(template) then
+            if pendingHeader then
+              values[#values + 1] = pendingHeader
+              pendingHeader = nil
+            end
+            values[#values + 1] = label
+            indexToTrigger[#values] = trigger
+            indexToVariable[#values] = variable
+            keyToIndex[trigger .. "-" .. variable] = #values
+          end
+        end
+      end
+    end
+    values[9997] = "•" .. L["Remove"] .. "•"
+    indexToTrigger[9997] = nil
+    indexToVariable[9997] = nil
+
+    local valuesNoRemove = {}
+    for index, label in ipairs(values) do
+      valuesNoRemove[index] = label
+    end
+
+    return values, valuesNoRemove, indexToTrigger, indexToVariable, keyToIndex
+  end
+
+  local function createBooleanChecksAccessors()
+    local function getChecks()
+      local v = conditions[i].changes[j].value
+      if type(v) == "table" and type(v.checks) == "table" then
+        return v.checks
+      end
+      return {}
+    end
+
+    local function setChecks(checks)
+      setValueTable(nil, { checks = checks })
+    end
+
+    local function updateCheck(index, updater)
+      local checks = CopyTable(getChecks())
+      checks[index] = checks[index] or {}
+      updater(checks[index])
+      setChecks(checks)
+    end
+
+    local function removeCheck(index)
+      local checks = CopyTable(getChecks())
+      tremove(checks, index)
+      setChecks(checks)
+    end
+
+    return getChecks, setChecks, updateCheck, removeCheck
+  end
+
+  local function addBooleanChecksControls(config)
+    local getChecks, setChecks, updateCheck, removeCheck = createBooleanChecksAccessors()
+
+    order = addSpace(args, order)
+
+    for index in ipairs(getChecks()) do
+      args["condition" .. i .. "check" .. index .. "value" .. j] = {
+        type = "select",
+        width = M33Auras.normalWidth,
+        values = config.valuesNoRemove,
+        name = L["Priority"] .. " " .. index,
+        desc = descIfNoValue(data, conditions[i].changes[j], "value", propertyType),
+        order = order,
+        get = function()
+          local v = getChecks()[index]
+          if v and v.trigger ~= nil and v.variable ~= nil then
+            return config.keyToIndex[v.trigger .. "-" .. v.variable]
+          end
+          return nil
+        end,
+        set = function(info, v)
+          updateCheck(index, function(item)
+            item.trigger = config.indexToTrigger[v]
+            item.variable = config.indexToVariable[v]
+            config.onSelect(item)
+            item.when = item.when ~= false
+          end)
+        end
+      }
+      order = order + 1
+
+      order = config.addFields(index, order, getChecks, updateCheck)
+
+      args["condition" .. i .. "check" .. index .. config.whenSuffix .. j] = {
+        type = "select",
+        width = M33Auras.normalWidth,
+        name = L["Apply when"],
+        order = order,
+        values = {
+          [true] = L["True"],
+          [false] = L["False"],
+        },
+        get = function()
+          local v = getChecks()[index]
+          return type(v) == "table" and v.when ~= false
+        end,
+        set = function(info, v)
+          updateCheck(index, function(item)
+            item.when = v
+          end)
+        end
+      }
+      order = order + 1
+
+      args["condition" .. i .. "check" .. index .. "remove" .. j] = {
+        type = "execute",
+        width = M33Auras.normalWidth,
+        name = L["Remove"],
+        order = order,
+        func = function()
+          removeCheck(index)
+        end
+      }
+      order = order + 1
+    end
+
+    args["condition" .. i .. config.addButtonKey .. j] = {
+      type = "execute",
+      width = M33Auras.normalWidth,
+      name = L["Add"] .. " " .. L["Boolean"],
+      order = order,
+      func = function()
+        local checks = CopyTable(getChecks())
+        tinsert(checks, config.createDefault())
+        setChecks(checks)
+      end
+    }
+    order = order + 1
+    order = addSpace(args, order)
+  end
+
+  if (propertyType == "bool" and propertyData and propertyData.valueFromBoolean) then
+    local values, valuesNoRemove, indexToTrigger, indexToVariable, keyToIndex = buildBooleanConditionValues(conditionTemplates)
+    addBooleanChecksControls({
+      valuesNoRemove = valuesNoRemove,
+      indexToTrigger = indexToTrigger,
+      indexToVariable = indexToVariable,
+      keyToIndex = keyToIndex,
+      whenSuffix = "valueWhen",
+      addButtonKey = "addCheck",
+      onSelect = function(item)
+        item.value = item.value == nil and 1 or item.value
+      end,
+      addFields = function(index, currentOrder, getChecks, updateCheck)
+        args["condition" .. i .. "check" .. index .. "valueAmount" .. j] = {
+          type = "range",
+          control = "M33AurasSpinBox",
+          width = M33Auras.normalWidth,
+          name = propertyData.valueLabel or L["Value"],
+          order = currentOrder,
+          min = 0,
+          max = 1,
+          step = 0.01,
+          isPercent = true,
+          get = function()
+            local v = getChecks()[index]
+            return v and v.value ~= nil and v.value or 1
+          end,
+          set = function(info, v)
+            updateCheck(index, function(item)
+              item.value = v
+            end)
+          end
+        }
+        return currentOrder + 1
+      end,
+      createDefault = function()
+        return {
+          trigger = -1,
+          variable = "alwaystrue",
+          value = 1,
+          when = true,
+        }
+      end
+    })
+  elseif (propertyType == "color" and propertyData and propertyData.colorFromBoolean) then
+    local values, valuesNoRemove, indexToTrigger, indexToVariable, keyToIndex = buildBooleanConditionValues(conditionTemplates)
+
+    addBooleanChecksControls({
+      valuesNoRemove = valuesNoRemove,
+      indexToTrigger = indexToTrigger,
+      indexToVariable = indexToVariable,
+      keyToIndex = keyToIndex,
+      whenSuffix = "colorWhen",
+      addButtonKey = "addColorCheck",
+      onSelect = function(item)
+        item.color = item.color or {1, 1, 1, 1}
+      end,
+      addFields = function(index, currentOrder, getChecks, updateCheck)
+        args["condition" .. i .. "check" .. index .. "color" .. j] = {
+          type = "color",
+          width = M33Auras.normalWidth,
+          name = L["Color"],
+          desc = descIfNoValue(data, conditions[i].changes[j], "value", propertyType),
+          order = currentOrder,
+          hasAlpha = true,
+          get = function()
+            local v = getChecks()[index]
+            if v and type(v.color) == "table" then
+              return v.color[1], v.color[2], v.color[3], v.color[4]
+            end
+            return 1, 1, 1, 1
+          end,
+          set = function(info, r, g, b, a)
+            updateCheck(index, function(item)
+              item.color = { r, g, b, a }
+            end)
+          end
+        }
+        return currentOrder + 1
+      end,
+      createDefault = function()
+        return {
+          trigger = -1,
+          variable = "alwaystrue",
+          color = {1, 1, 1, 1},
+          when = true,
+        }
+      end
+    })
+  elseif (propertyType == "bool" or propertyType == "number") then
     args["condition" .. i .. "value" .. j] = {
       type = "toggle",
       width = M33Auras.normalWidth,
@@ -505,8 +751,8 @@ local function addControlsForChange(args, order, data, conditionVariable, totalA
     order = order + 1;
     if (propertyType == "number") then
       args["condition" .. i .. "value" .. j].name = blueIfNoValue(data, conditions[i].changes[j], "value", L["Differences"])
-      local properties = allProperties.propertyMap[property];
-      if (properties.min or properties.softMin) and (properties.max or properties.softMax) then
+      local properties = propertyData;
+      if (properties and (properties.min or properties.softMin)) and (properties.max or properties.softMax) then
         args["condition" .. i .. "value" .. j].type = "range";
         args["condition" .. i .. "value" .. j].control = "M33AurasSpinBox"
         args["condition" .. i .. "value" .. j].min = properties.min;
@@ -2550,7 +2796,7 @@ local function addControlsForCondition(args, order, data, conditionVariable, tot
   end
 
   for j = 1, conditions[i].changes and #conditions[i].changes or 0 do
-    order = addControlsForChange(args, order, data, conditionVariable, totalAuraCount, conditions, i, j, allProperties, usedProperties);
+    order = addControlsForChange(args, order, data, conditionVariable, totalAuraCount, conditions, i, j, allProperties, usedProperties, conditionTemplates);
   end
 
   args["condition" .. i .. "_addChange"] = {

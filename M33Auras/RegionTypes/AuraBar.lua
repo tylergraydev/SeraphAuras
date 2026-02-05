@@ -78,6 +78,24 @@ local properties = {
     setter = "Color",
     type = "color",
   },
+  barColorFromBoolean = {
+    display = L["Bar Color"] .. " (Boolean)",
+    setter = "Color",
+    type = "color",
+    colorFromBoolean = true,
+    baseProperty = "barColor",
+    resetFallback = {1, 0, 0, 1},
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          color = {1, 0, 0, 1},
+          when = true,
+        },
+      },
+    },
+  },
   barColor2 = {
     display = L["Gradient End"],
     setter = "SetBarColor2",
@@ -119,6 +137,24 @@ local properties = {
     display = {L["Icon"], L["Desaturate"]},
     setter = "SetIconDesaturated",
     type = "bool",
+  },
+  desaturationFromBoolean = {
+    display = {L["Icon"], L["Desaturate"] .. " (Boolean)"},
+    setter = "SetIconDesaturated",
+    type = "bool",
+    valueFromBoolean = true,
+    baseProperty = "desaturate",
+    valueLabel = L["Desaturate"],
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          value = 1,
+          when = true,
+        },
+      },
+    },
   },
   backgroundColor = {
     display = L["Background Color"],
@@ -884,8 +920,13 @@ local funcs = {
     self.icon:SetVertexColor(r, g, b, a);
   end,
   SetIconDesaturated = function(self, b)
-    self.desaturateIcon = b
-    self.icon:SetDesaturated(b);
+    if type(b) == "boolean" then
+      self.icon:SetDesaturation(b and 1 or 0);
+    elseif type(b) == "number" then
+      self.icon:SetDesaturation(b);
+    else
+      self.icon:SetDesaturation(0);
+    end
   end,
   SetBackgroundColor = function (self, r, g, b, a)
     self.bar:SetBackgroundColor(r, g, b, a);
@@ -1230,7 +1271,15 @@ local funcs = {
     self.subRegionEvents:Notify("OrientationChanged")
   end,
   UpdateForegroundColor = function(self)
-    if self.enableGradient then
+    if self.enableGradient and
+    not hasanysecretvalues(self.color_anim_r or self.color_r,
+                                     self.color_anim_g or self.color_g,
+                                     self.color_anim_b or self.color_b,
+                                     self.color_anim_a or self.color_a,
+                                     self.barColor2[1],
+                                     self.barColor2[2],
+                                     self.barColor2[3],
+                                     self.barColor2[4]) then
       self.bar:SetForegroundGradient(self.gradientOrientation,
                                      self.color_anim_r or self.color_r,
                                      self.color_anim_g or self.color_g,
@@ -1425,7 +1474,6 @@ local function modify(parent, region, data)
   region.iconVisible = data.icon
   region.icon_side = data.icon_side
   region.icon_color = CopyTable(data.icon_color)
-  region.desaturateIcon = data.desaturate
   region.zoom = data.zoom
 
   if (data.overlays) then

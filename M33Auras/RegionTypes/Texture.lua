@@ -40,6 +40,24 @@ local properties = {
     setter = "Color",
     type = "color",
   },
+  colorFromBoolean = {
+    display = L["Color"] .. " (Boolean)",
+    setter = "Color",
+    type = "color",
+    colorFromBoolean = true,
+    baseProperty = "color",
+    resetFallback = {1, 0, 0, 1},
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          color = {1, 0, 0, 1},
+          when = true,
+        },
+      },
+    },
+  },
   desaturate = {
     display = L["Desaturate"],
     setter = "SetDesaturated",

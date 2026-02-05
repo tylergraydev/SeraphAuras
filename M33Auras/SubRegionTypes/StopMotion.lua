@@ -51,6 +51,8 @@ local default = function(parentType)
     defaults.anchor_area = "ALL"
   end
 
+  Private.subRegionPrototype.AddAlphaToDefault(defaults, "stopmotion")
+
   return defaults
 end
 
@@ -73,6 +75,10 @@ local properties = {
     type = "color"
   },
 }
+
+Private.subRegionPrototype.AddAlphaProperties(properties, "stopmotion")
+Private.subRegionPrototype.AddColorFromBooleanProperty(properties, "stopmotion", "stopmotionColor")
+
 
 local funcs = {
   OnSizeChanged = function(self)
@@ -268,6 +274,7 @@ local function modify(parent, region, parentData, data, first)
     parent.subRegionEvents:AddSubscriber("Update", region)
   end
 
+  region:SetAlpha(1)
   region:SetVisible(data.stopmotionVisible)
   region:SetDesaturated(data.stopmotionDesaturate)
 end

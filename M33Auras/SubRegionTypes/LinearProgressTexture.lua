@@ -40,6 +40,8 @@ local default = function(parentType)
     defaults.anchor_area = "ALL"
   end
 
+  Private.subRegionPrototype.AddAlphaToDefault(defaults, "linearTexture")
+
   return defaults
 end
 
@@ -98,6 +100,10 @@ local properties = {
     isPercent = true,
   },
 }
+
+Private.subRegionPrototype.AddAlphaProperties(properties, "linearTexture")
+Private.subRegionPrototype.AddColorFromBooleanProperty(properties, "linearTexture", "linearTextureColor")
+
 
 --- @class LinearProgressSubElement
 --- @field linearTexture LinearProgressTextureInstance
@@ -281,6 +287,7 @@ local function modify(parent, region, parentData, data, first)
   region.FrameTick = nil
   parent.subRegionEvents:AddSubscriber("Update", region)
 
+  region:SetAlpha(1)
   region:SetVisible(data.linearTextureVisible)
   region:SetColor(data.linearTextureColor[1], data.linearTextureColor[2],
                   data.linearTextureColor[3], data.linearTextureColor[4])

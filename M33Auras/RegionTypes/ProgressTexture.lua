@@ -85,10 +85,46 @@ local properties = {
     setter = "Color",
     type = "color"
   },
+  foregroundColorFromBoolean = {
+    display = L["Foreground Color"] .. " (Boolean)",
+    setter = "Color",
+    type = "color",
+    colorFromBoolean = true,
+    baseProperty = "foregroundColor",
+    resetFallback = {1, 0, 0, 1},
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          color = {1, 0, 0, 1},
+          when = true,
+        },
+      },
+    },
+  },
   backgroundColor = {
     display = L["Background Color"],
     setter = "SetBackgroundColor",
     type = "color"
+  },
+  backgroundColorFromBoolean = {
+    display = L["Background Color"] .. " (Boolean)",
+    setter = "SetBackgroundColor",
+    type = "color",
+    colorFromBoolean = true,
+    baseProperty = "backgroundColor",
+    resetFallback = {1, 0, 0, 1},
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          color = {1, 0, 0, 1},
+          when = true,
+        },
+      },
+    },
   },
   width = {
     display = L["Width"],

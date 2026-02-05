@@ -11,7 +11,6 @@ Private.barmodels = {}
 local default = function(parentType)
   return {
     model_visible = true,
-    model_alpha = 1,
     api = false,
     model_x = 0,
     model_y = 0,
@@ -154,6 +153,7 @@ local funcs = {
     self:UpdateVisible()
   end,
   SetAlpha = function(self, alpha)
+    if issecretvalue(alpha) then return end
     if self.model then
       self.model:SetModelAlpha(alpha)
     end

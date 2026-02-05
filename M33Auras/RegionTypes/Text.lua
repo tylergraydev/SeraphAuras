@@ -30,7 +30,9 @@ local default = {
 
   shadowColor = { 0, 0, 0, 1},
   shadowXOffset = 1,
-  shadowYOffset = -1
+  shadowYOffset = -1,
+
+  alpha = 1,
 };
 
 local properties = {
@@ -38,6 +40,24 @@ local properties = {
     display = L["Color"],
     setter = "Color",
     type = "color",
+  },
+  colorFromBoolean = {
+    display = L["Color"] .. " (Boolean)",
+    setter = "Color",
+    type = "color",
+    colorFromBoolean = true,
+    baseProperty = "color",
+    resetFallback = {1, 1, 1, 1},
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          color = {1, 1, 1, 1},
+          when = true,
+        },
+      },
+    },
   },
   fontSize = {
     display = L["Font Size"],

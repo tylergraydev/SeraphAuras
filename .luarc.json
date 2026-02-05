@@ -245,7 +245,8 @@
         "issecretvalue",
         "GREMINDER",
         "C_Secrets",
-        "hasanysecretvalues"
+        "hasanysecretvalues",
+        "Clamp"
   ],
   "runtime.version": "Lua 5.1",
   "workspace.ignoreDir": [

@@ -116,6 +116,24 @@ function Private.regionPrototype.AddProperties(properties, defaultsForRegion)
       bigStep = 0.01,
       isPercent = true
     }
+    properties["alphaFromBoolean"] = {
+      display = L["Alpha"] .. " (Boolean)",
+      setter = "SetRegionAlpha",
+      type = "bool",
+      valueFromBoolean = true,
+      baseProperty = "alpha",
+      valueLabel = L["Alpha"],
+      default = {
+        checks = {
+          {
+            trigger = -1,
+            variable = "alwaystrue",
+            value = 1,
+            when = true,
+          },
+        },
+      },
+    }
   end
 
   if defaultsForRegion and defaultsForRegion.progressSource then
@@ -348,7 +366,7 @@ local function SetOffsetAnim(self, xOffset, yOffset)
 end
 
 local function SetRegionAlpha(self, alpha)
-  if (self.alpha == alpha) then
+  if not hasanysecretvalues(self.alpha, alpha) and (self.alpha == alpha) then
     return;
   end
 

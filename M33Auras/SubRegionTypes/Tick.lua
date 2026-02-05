@@ -7,7 +7,7 @@ local Private = select(2, ...)
 local L = M33Auras.L;
 
 local default = function()
-  return {
+  local d = {
     tick_visible = true,
     tick_color = {1, 1, 1, 1},
     tick_placement_mode = "AtValue",
@@ -25,6 +25,8 @@ local default = function()
     tick_yOffset = 0,
     tick_mirror = false,
   }
+  Private.subRegionPrototype.AddAlphaToDefault(d, "tick")
+  return d
 end
 
 local properties = {
@@ -97,8 +99,12 @@ local properties = {
     display = L["Texture"],
     setter = "SetTexture",
     type = "texture"
-  }
+  },
 }
+
+Private.subRegionPrototype.AddAlphaProperties(properties, "tick")
+Private.subRegionPrototype.AddColorFromBooleanProperty(properties, "tick", "tick_color")
+
 
 local function GetProperties(parentData, data)
   local result = CopyTable(properties)
@@ -544,6 +550,7 @@ local function modify(parent, region, parentData, data, first)
     end
   end
 
+  region:SetAlpha(1)
   region:SetVisible(data.tick_visible)
   region:SetTickColor(unpack(data.tick_color))
   region:SetTickDesaturated(data.tick_desaturate)

@@ -170,6 +170,51 @@ local function formatValueForAssignment(vType, value, pathToCustomFunction, path
   return "nil";
 end
 
+local function formatValueForAssignmentWithConstants(vType, value, pathToCustomFunction, pathToFormatters, data, constants)
+  if constants and (vType == "bool" or vType == "color") and type(value) == "table" and type(value.checks) == "table" then
+    local serializedChecks = {}
+    if vType == "bool" then
+      for _, check in ipairs(value.checks) do
+        if type(check) == "table" and check.trigger ~= nil and check.variable ~= nil then
+          local valueValue = check.value
+          serializedChecks[#serializedChecks + 1] = string.format("{ trigger = %s, variable = %q, value = %s, when = %s }",
+            tostring(check.trigger),
+            tostring(check.variable),
+            valueValue ~= nil and tostring(valueValue) or "nil",
+            check.when == false and "false" or "true")
+        end
+      end
+    elseif vType == "color" then
+      for _, check in ipairs(value.checks) do
+        if type(check) == "table" and check.trigger ~= nil and check.variable ~= nil then
+          local color = check.color
+          serializedChecks[#serializedChecks + 1] = string.format("{ trigger = %s, variable = %q, color = {%s, %s, %s, %s}, when = %s }",
+            tostring(check.trigger),
+            tostring(check.variable),
+            tostring(color and color[1] or 1),
+            tostring(color and color[2] or 1),
+            tostring(color and color[3] or 1),
+            tostring(color and color[4] or 1),
+            check.when == false and "false" or "true")
+        end
+      end
+    end
+
+    local literal = string.format("{ checks = { %s } }", table.concat(serializedChecks, ", "))
+    local cacheKey = vType .. ":" .. literal
+    if constants.cache[cacheKey] then
+      return constants.cache[cacheKey]
+    end
+    constants.index = constants.index + 1
+    local name = "_wa_cond_value_" .. constants.index
+    constants.cache[cacheKey] = name
+    constants.lines[#constants.lines + 1] = "local " .. name .. " = " .. literal .. "\n"
+    return name
+  end
+
+  return formatValueForAssignment(vType, value, pathToCustomFunction, pathToFormatters, data)
+end
+
 local function formatValueForCall(type, property)
   if type == "bool" or type == "number" or type == "list" or type == "icon" or type == "string" or type == "texture" or type == "textureLSM"
     or type == "progressSource"
@@ -447,14 +492,14 @@ local function CreateTestForCondition(data, input, allConditionsTemplate, usedSt
             or ""
 
       recheckCode = "  nextTime = state[" .. trigger .. "] " .. andNotPaused
-      .. " and " .. variableString
+      .. " and " .. variableString .. " and " .. "not issecretvalue(" .. variableString .. ")"
       .. " and " .. "(" .. variableString .. " - " .. value .. multiplyModRate .. ")\n"
 
       recheckCode = recheckCode .. "  if (nextTime and (not recheckTime or nextTime < recheckTime) and nextTime >= now) then\n"
       recheckCode = recheckCode .. "    recheckTime = nextTime\n";
       recheckCode = recheckCode .. "  end\n"
     elseif (cType == "elapsedTimer" and value) then
-      recheckCode = "  nextTime = state[" .. trigger .. "] and state[" .. trigger .. "]" .. string.format("[%q]",  variable) .. " and (state[" .. trigger .. "]" .. string.format("[%q]",  variable) .. " +" .. value .. ")\n";
+      recheckCode = "  nextTime = state[" .. trigger .. "] and state[" .. trigger .. "]" .. string.format("[%q]",  variable) .. "and not issecretvalue(state[" .. trigger .. "]" .. string.format("[%q]",  variable) .. ")" .. " and (state[" .. trigger .. "]" .. string.format("[%q]",  variable) .. " +" .. value .. ")\n";
       recheckCode = recheckCode .. "  if (nextTime and (not recheckTime or nextTime < recheckTime) and nextTime >= now) then\n"
       recheckCode = recheckCode .. "    recheckTime = nextTime\n";
       recheckCode = recheckCode .. "  end\n"
@@ -495,6 +540,20 @@ local function ParseProperty(property)
   end
 end
 
+local function ResolveBaseProperty(property, baseProperty)
+  if not baseProperty then
+    return property
+  end
+  if string.match(baseProperty, "^sub%.") then
+    return baseProperty
+  end
+  local subIndex = ParseProperty(property)
+  if subIndex then
+    return "sub." .. subIndex .. "." .. baseProperty
+  end
+  return baseProperty
+end
+
 local function GetBaseProperty(data, property, start)
   if (not data) then
     return nil;
@@ -523,15 +582,14 @@ local function CreateDeactivateCondition(ret, condition, conditionNumber, data, 
       if (change.property) then
         local propertyData = properties and properties[change.property]
         if (propertyData and propertyData.type and propertyData.setter) then
+          local baseProperty = ResolveBaseProperty(change.property, propertyData.baseProperty or change.property)
           usedProperties[change.property] = true;
-          table.insert(ret, "    propertyChanges['" .. change.property .. "'] = "
-                .. formatValueForAssignment(propertyData.type, GetBaseProperty(data, change.property),
-                                            nil, nil, data)
-                .. "\n")
+          table.insert(ret, "    propertyChanges['" .. baseProperty .. "'] = "
+                .. formatValueForAssignment(propertyData.type, GetBaseProperty(data, baseProperty), nil, nil, data) .. "\n")
           if (debug) then
             table.insert(ret, "    print('- " .. change.property .. " "
-                      .. formatValueForAssignment(propertyData.type, GetBaseProperty(data, change.property),
-                                                 nil, nil, data)
+                      .. formatValueForAssignment(propertyData.type, GetBaseProperty(data, baseProperty),
+                                                  nil, nil, data)
                       .. "')\n")
           end
         end
@@ -543,9 +601,136 @@ local function CreateDeactivateCondition(ret, condition, conditionNumber, data, 
   return ret;
 end
 
-local function CreateActivateCondition(ret, id, condition, conditionNumber, data, properties, debug)
+local function CreateActivateCondition(ret, id, condition, conditionNumber, data, properties, debug, constants)
+  local function appendColorFromBooleanChange(change, propertyData, valueToApply)
+    local baseProperty = ResolveBaseProperty(change.property, propertyData.baseProperty or change.property)
+    local baseColor = GetBaseProperty(data, baseProperty)
+    if type(baseColor) ~= "table" then
+      baseColor = propertyData.resetFallback or {1, 1, 1, 1}
+    end
+
+    local formattedValue = formatValueForAssignmentWithConstants(propertyData.type, valueToApply, nil, nil, data, constants)
+    table.insert(ret, "      local colorChange = " .. formattedValue .. "\n")
+    table.insert(ret, "      if type(colorChange) == 'table' then\n")
+    table.insert(ret, "        local dc1, dc2, dc3, dc4\n")
+    table.insert(ret, "        if type(propertyChanges['" .. baseProperty .. "']) == 'table' then\n")
+    table.insert(ret, "          dc1, dc2, dc3, dc4 = propertyChanges['" .. baseProperty .. "'][1] or " .. tostring(baseColor[1] or 1)
+      .. ", propertyChanges['" .. baseProperty .. "'][2] or " .. tostring(baseColor[2] or 1)
+      .. ", propertyChanges['" .. baseProperty .. "'][3] or " .. tostring(baseColor[3] or 1)
+      .. ", propertyChanges['" .. baseProperty .. "'][4] or " .. tostring(baseColor[4] or 1) .. "\n")
+    table.insert(ret, "        else\n")
+    table.insert(ret, "          dc1, dc2, dc3, dc4 = " .. tostring(baseColor[1] or 1) .. ", " .. tostring(baseColor[2] or 1)
+      .. ", " .. tostring(baseColor[3] or 1) .. ", " .. tostring(baseColor[4] or 1) .. "\n")
+    table.insert(ret, "        end\n")
+    table.insert(ret, "        if type(colorChange.checks) == 'table' then\n")
+    table.insert(ret, "          local c1, c2, c3, c4 = dc1, dc2, dc3, dc4\n")
+    table.insert(ret, "          for _, check in ipairs_reverse(colorChange.checks) do\n")
+    table.insert(ret, "            if type(check) == 'table' and check.trigger ~= nil and check.variable ~= nil then\n")
+    table.insert(ret, "              local boolValue = state[check.trigger] and state[check.trigger][check.variable]\n")
+    table.insert(ret, "              if boolValue == nil and check.variable == 'alwaystrue' then\n")
+    table.insert(ret, "                boolValue = true\n")
+    table.insert(ret, "              end\n")
+    table.insert(ret, "              if boolValue ~= nil then\n")
+    table.insert(ret, "                local ac1, ac2, ac3, ac4\n")
+    table.insert(ret, "                if check.color then\n")
+    table.insert(ret, "                  ac1, ac2, ac3, ac4 = check.color[1] or 1, check.color[2] or 1, check.color[3] or 1, check.color[4] or 1\n")
+    table.insert(ret, "                else\n")
+    table.insert(ret, "                  ac1, ac2, ac3, ac4 = dc1, dc2, dc3, dc4\n")
+    table.insert(ret, "                end\n")
+    table.insert(ret, "                local tc1, tc2, tc3, tc4\n")
+    table.insert(ret, "                local fc1, fc2, fc3, fc4\n")
+    table.insert(ret, "                if check.when == false then\n")
+    table.insert(ret, "                  tc1, tc2, tc3, tc4 = c1, c2, c3, c4\n")
+    table.insert(ret, "                  fc1, fc2, fc3, fc4 = ac1, ac2, ac3, ac4\n")
+    table.insert(ret, "                else\n")
+    table.insert(ret, "                  tc1, tc2, tc3, tc4 = ac1, ac2, ac3, ac4\n")
+    table.insert(ret, "                  fc1, fc2, fc3, fc4 = c1, c2, c3, c4\n")
+    table.insert(ret, "                end\n")
+    table.insert(ret, "                c1 = C_CurveUtil.EvaluateColorValueFromBoolean(boolValue, tc1, fc1)\n")
+    table.insert(ret, "                c2 = C_CurveUtil.EvaluateColorValueFromBoolean(boolValue, tc2, fc2)\n")
+    table.insert(ret, "                c3 = C_CurveUtil.EvaluateColorValueFromBoolean(boolValue, tc3, fc3)\n")
+    table.insert(ret, "                c4 = C_CurveUtil.EvaluateColorValueFromBoolean(boolValue, tc4, fc4)\n")
+    table.insert(ret, "              end\n")
+    table.insert(ret, "            end\n")
+    table.insert(ret, "          end\n")
+    table.insert(ret, "          propertyChanges['" .. baseProperty .. "'] = { c1, c2, c3, c4 }\n")
+    table.insert(ret, "        else\n")
+    table.insert(ret, "          propertyChanges['" .. baseProperty .. "'] = { dc1, dc2, dc3, dc4 }\n")
+    table.insert(ret, "        end\n")
+    table.insert(ret, "      end\n")
+  end
+
+  local function appendValueFromBooleanChange(change, propertyData, valueToApply)
+    local baseProperty = ResolveBaseProperty(change.property, propertyData.baseProperty or change.property)
+    local baseValue = GetBaseProperty(data, baseProperty)
+    if type(baseValue) == "boolean" then
+      baseValue = baseValue and 1 or 0
+    end
+    if baseValue == nil and propertyData.resetFallback ~= nil then
+      baseValue = propertyData.resetFallback
+    end
+
+    local formattedValue = formatValueForAssignmentWithConstants(propertyData.type, valueToApply, nil, nil, data, constants)
+    table.insert(ret, "      local valueChange = " .. formattedValue .. "\n")
+    table.insert(ret, "      if type(valueChange) == 'table' then\n")
+    table.insert(ret, "        local currentValue\n")
+    table.insert(ret, "        if type(propertyChanges['" .. baseProperty .. "']) == 'number' then\n")
+    table.insert(ret, "          currentValue = propertyChanges['" .. baseProperty .. "']\n")
+    table.insert(ret, "        else\n")
+    table.insert(ret, "          currentValue = " .. (baseValue ~= nil and tostring(baseValue) or "0") .. "\n")
+    table.insert(ret, "        end\n")
+    table.insert(ret, "        if type(valueChange.checks) == 'table' then\n")
+    table.insert(ret, "          for _, check in ipairs_reverse(valueChange.checks) do\n")
+    table.insert(ret, "            if type(check) == 'table' and check.trigger ~= nil and check.variable ~= nil then\n")
+    table.insert(ret, "              local boolValue = state[check.trigger] and state[check.trigger][check.variable]\n")
+    table.insert(ret, "              if boolValue == nil and check.variable == 'alwaystrue' then\n")
+    table.insert(ret, "                boolValue = true\n")
+    table.insert(ret, "              end\n")
+    table.insert(ret, "              if boolValue ~= nil then\n")
+    table.insert(ret, "                local appliedValue = check.value\n")
+    table.insert(ret, "                if appliedValue == nil then appliedValue = " .. (baseValue ~= nil and tostring(baseValue) or "0") .. " end\n")
+    table.insert(ret, "                local trueValue\n")
+    table.insert(ret, "                local falseValue\n")
+    table.insert(ret, "                if check.when == false then\n")
+    table.insert(ret, "                  trueValue = currentValue\n")
+    table.insert(ret, "                  falseValue = appliedValue\n")
+    table.insert(ret, "                else\n")
+    table.insert(ret, "                  trueValue = appliedValue\n")
+    table.insert(ret, "                  falseValue = currentValue\n")
+    table.insert(ret, "                end\n")
+    table.insert(ret, "                currentValue = C_CurveUtil.EvaluateColorValueFromBoolean(boolValue, trueValue, falseValue)\n")
+    table.insert(ret, "              end\n")
+    table.insert(ret, "            end\n")
+    table.insert(ret, "          end\n")
+    table.insert(ret, "          propertyChanges['" .. baseProperty .. "'] = currentValue\n")
+    table.insert(ret, "        else\n")
+    table.insert(ret, "          propertyChanges['" .. baseProperty .. "'] = currentValue\n")
+    table.insert(ret, "        end\n")
+    table.insert(ret, "      end\n")
+  end
   if (condition.changes) then
     table.insert(ret, "  if (newActiveConditions[" .. conditionNumber .. "]) then\n")
+    -- Apply boolean-driven changes once per active condition
+    for changeNum, change in ipairs(condition.changes) do
+      if (change.property) then
+        local propertyData = properties and properties[change.property]
+        if (propertyData and propertyData.type and propertyData.setter) then
+          if propertyData.colorFromBoolean then
+            local valueToApply = change.value
+            if type(valueToApply) ~= "table" then
+              valueToApply = propertyData.default
+            end
+            appendColorFromBooleanChange(change, propertyData, valueToApply)
+          elseif propertyData.valueFromBoolean then
+            local valueToApply = change.value
+            if type(valueToApply) ~= "table" then
+              valueToApply = propertyData.default
+            end
+            appendValueFromBooleanChange(change, propertyData, valueToApply)
+          end
+        end
+      end
+    end
     table.insert(ret, "    if (not activatedConditions[".. conditionNumber .. "]) then\n")
     if (debug) then table.insert(ret, "      print('Activating condition " .. conditionNumber .. "' )\n") end
     -- non active => active
@@ -554,11 +739,15 @@ local function CreateActivateCondition(ret, id, condition, conditionNumber, data
         local propertyData = properties and properties[change.property]
         if (propertyData and propertyData.type) then
           if (propertyData.setter) then
-            table.insert(ret, "      propertyChanges['" .. change.property .. "'] = "
-                      .. formatValueForAssignment(propertyData.type, change.value, nil, nil, data) .. "\n")
-            if (debug) then
-              table.insert(ret, "      print('- " .. change.property .. " "
-                         .. formatValueForAssignment(propertyData.type, change.value, nil, nil, data) .. "')\n")
+            local valueToApply = change.value
+            if (propertyData.valueFromBoolean or propertyData.colorFromBoolean) and type(valueToApply) ~= "table" then
+              valueToApply = propertyData.default
+            end
+            if not (propertyData.colorFromBoolean or propertyData.valueFromBoolean) then
+              table.insert(ret, "      propertyChanges['" .. change.property .. "'] = " .. formatValueForAssignmentWithConstants(propertyData.type, valueToApply, nil, nil, data, constants) .. "\n")
+              if (debug) then
+                table.insert(ret, "      print('- " .. change.property .. " " .. formatValueForAssignmentWithConstants(propertyData.type, valueToApply, nil, nil, data, constants) .. "')\n")
+              end
             end
           elseif (propertyData.action) then
             local pathToCustomFunction = "nil";
@@ -597,12 +786,14 @@ local function CreateActivateCondition(ret, id, condition, conditionNumber, data
       if (change.property) then
         local propertyData = properties and properties[change.property]
         if (propertyData and propertyData.type and propertyData.setter) then
-          table.insert(ret, "      if(propertyChanges['" .. change.property .. "'] ~= nil) then\n")
-          table.insert(ret, "        propertyChanges['" .. change.property .. "'] = "
-                       .. formatValueForAssignment(propertyData.type, change.value, nil, nil, data) .. "\n")
-          if (debug) then table.insert(ret, "        print('- " .. change.property .. " "
-                       .. formatValueForAssignment(propertyData.type,  change.value, nil, nil, data) .. "')\n") end
-          table.insert(ret, "      end\n")
+          if not (propertyData.colorFromBoolean or propertyData.valueFromBoolean) then
+            table.insert(ret, "      if(propertyChanges['" .. change.property .. "'] ~= nil) then\n")
+            table.insert(ret, "        propertyChanges['" .. change.property .. "'] = "
+                         .. formatValueForAssignment(propertyData.type, change.value, nil, nil, data) .. "\n")
+            if (debug) then table.insert(ret, "        print('- " .. change.property .. " "
+                         .. formatValueForAssignment(propertyData.type,  change.value, nil, nil, data) .. "')\n") end
+            table.insert(ret, "      end\n")
+          end
         end
       end
     end
@@ -760,6 +951,8 @@ local function ConstructConditionFunction(data)
   table.insert(ret, "local propertyChanges = {};\n")
   table.insert(ret, "local nextTime;\n")
   table.insert(ret, string.format("local uid = %q\n", data.uid))
+  local constants = { lines = {}, cache = {}, index = 0 }
+  local constantsInsertIndex = #ret + 1
   table.insert(ret, "return function(region, hideRegion)\n")
   if (debug) then table.insert(ret, "  print('check conditions for:', region.id, region.cloneId)\n") end
   table.insert(ret, "  local id = region.id\n")
@@ -807,33 +1000,41 @@ local function ConstructConditionFunction(data)
   -- Third Loop deals with conditions that are newly active
   if (data.conditions) then
     for conditionNumber, condition in ipairs(data.conditions) do
-      CreateActivateCondition(ret, data.id, condition, conditionNumber, data, properties, debug)
+      CreateActivateCondition(ret, data.id, condition, conditionNumber, data, properties, debug, constants)
     end
   end
 
   -- Last apply changes to region
   for property, _  in pairs(usedProperties) do
-    table.insert(ret, "  if(propertyChanges['" .. property .. "'] ~= nil) then\n")
+    local propertyData = properties and properties[property]
+    local baseProperty = ResolveBaseProperty(property, propertyData and propertyData.baseProperty or property)
+    table.insert(ret, "  if(propertyChanges['" .. baseProperty .. "'] ~= nil) then\n")
     local arg1 = ""
-    if (properties[property].arg1) then
-      if (type(properties[property].arg1) == "number") then
-        arg1 = tostring(properties[property].arg1) .. ", "
-      else
-        arg1 = "'" .. properties[property].arg1 .. "', "
+    if (properties[baseProperty].arg1) then
+      if (type(properties[baseProperty].arg1) == "number") then
+        arg1 = tostring(properties[baseProperty].arg1) .. ", "
+        else
+        arg1 = "'" .. properties[baseProperty].arg1 .. "', "
+        end
       end
-    end
 
-    local base = "region:"
-    local subIndex = ParseProperty(property)
-    if subIndex then
-      base = "region.subRegions[" .. subIndex .. "]:"
-    end
+      local base = "region:"
+      local subIndex = ParseProperty(baseProperty)
+      if subIndex then
+        base = "region.subRegions[" .. subIndex .. "]:"
+      end
 
-    table.insert(ret, "    " .. base .. properties[property].setter .. "(" .. arg1 .. formatValueForCall(properties[property].type, property)  .. ")\n")
-    if (debug) then table.insert(ret, "    print('Calling "  .. properties[property].setter ..  " with', " .. arg1 ..  formatValueForCall(properties[property].type, property) .. ")\n") end
-    table.insert(ret, "  end\n")
+    table.insert(ret, "    " .. base .. properties[baseProperty].setter .. "(" .. arg1 .. formatValueForCall(properties[baseProperty].type, baseProperty)  .. ")\n")
+    if (debug) then table.insert(ret, "    print('Calling "  .. properties[baseProperty].setter ..  " with', " .. arg1 ..  formatValueForCall(properties[baseProperty].type, baseProperty) .. ")\n") end
+      table.insert(ret, "  end\n")
   end
   table.insert(ret, "end\n")
+
+  if #constants.lines > 0 then
+    for index = #constants.lines, 1, -1 do
+      table.insert(ret, constantsInsertIndex, constants.lines[index])
+    end
+  end
 
   return table.concat(ret)
 end

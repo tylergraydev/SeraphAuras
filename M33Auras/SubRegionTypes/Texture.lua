@@ -34,6 +34,8 @@ local default = function(parentType)
     defaults.anchor_area = "ALL"
   end
 
+  Private.subRegionPrototype.AddAlphaToDefault(defaults, "texture")
+
   return defaults
 end
 
@@ -67,8 +69,12 @@ local properties = {
     max = 360,
     bigStep = 1,
     default = 0
-  }
+  },
 }
+
+Private.subRegionPrototype.AddAlphaProperties(properties, "texture")
+Private.subRegionPrototype.AddColorFromBooleanProperty(properties, "texture", "textureColor")
+
 
 local funcs = {
   SetDesaturated = function(self, b)
@@ -142,6 +148,7 @@ local function modify(parent, region, parentData, data, first)
     textureWrapMode = "CLAMPTOBLACKADDITIVE"
   })
 
+  region:SetAlpha(1)
   region:SetVisible(data.textureVisible)
   region:SetDesaturated(data.textureDesaturate)
   region:SetColor(data.textureColor[1], data.textureColor[2], data.textureColor[3], data.textureColor[4])

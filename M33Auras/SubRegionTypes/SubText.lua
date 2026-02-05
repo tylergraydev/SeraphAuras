@@ -15,7 +15,7 @@ local defaultFontSize = M33Auras.defaultFontSize
 local default = function(parentType)
   if parentType == "icon" then
     -- No Shadow, but Outline
-    return {
+    local d = {
       text_text = "%p",
       text_color = {1, 1, 1, 1},
       text_font = defaultFont,
@@ -38,9 +38,11 @@ local default = function(parentType)
       text_fixedWidth = 64,
       text_wordWrap = "WordWrap",
     }
+    Private.subRegionPrototype.AddAlphaToDefault(d, "text")
+    return d
   else
     -- With Shadow, without Outline
-    return {
+    local d = {
       text_text = "%n",
       text_color = {1, 1, 1, 1},
       text_font = defaultFont,
@@ -63,6 +65,8 @@ local default = function(parentType)
       text_fixedWidth = 64,
       text_wordWrap = "WordWrap",
     }
+    Private.subRegionPrototype.AddAlphaToDefault(d, "text")
+    return d
   end
 end
 
@@ -110,6 +114,9 @@ local properties = {
     bigStep = 10,
   },
 }
+
+Private.subRegionPrototype.AddAlphaProperties(properties, "text")
+Private.subRegionPrototype.AddColorFromBooleanProperty(properties, "text", "text_color")
 
 
 -- Rotate object around its origin
@@ -496,6 +503,7 @@ local function modify(parent, region, parentData, data, first)
     self:Anchor()
   end
 
+  region:SetAlpha(1)
   region:Color(data.text_color[1], data.text_color[2], data.text_color[3], data.text_color[4]);
   region:SetVisible(data.text_visible)
   animRotate(text, textDegrees, selfPoint)
@@ -503,7 +511,7 @@ end
 
 local function addDefaultsForNewAura(data)
   if data.regionType == "aurabar" then
-    tinsert(data.subRegions, {
+    local d1 = {
       ["type"] = "subtext",
       text_text = "%p",
       text_color = {1, 1, 1, 1},
@@ -523,9 +531,12 @@ local function addDefaultsForNewAura(data)
       text_shadowYOffset = -1,
 
       rotateText = "NONE",
-    });
+    }
+    Private.subRegionPrototype.AddAlphaToDefault(d1, "text")
 
-    tinsert(data.subRegions, {
+    tinsert(data.subRegions, d1);
+
+    local d2 = {
       ["type"] = "subtext",
       text_text = "%n",
       text_color = {1, 1, 1, 1},
@@ -545,9 +556,12 @@ local function addDefaultsForNewAura(data)
       text_shadowYOffset = -1,
 
       rotateText = "NONE",
-    });
+    }
+    Private.subRegionPrototype.AddAlphaToDefault(d2, "text")
+
+    tinsert(data.subRegions, d2);
   elseif data.regionType == "icon" then
-    tinsert(data.subRegions, {
+    local d1 = {
       ["type"] = "subtext",
       text_text = "%s",
       text_color = {1, 1, 1, 1},
@@ -567,7 +581,10 @@ local function addDefaultsForNewAura(data)
       text_shadowYOffset = 0,
 
       rotateText = "NONE",
-    });
+    }
+    Private.subRegionPrototype.AddAlphaToDefault(d1, "text")
+
+    tinsert(data.subRegions, d1);
   end
 end
 

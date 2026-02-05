@@ -18,6 +18,7 @@ local default = function(parentType)
   if parentType == "aurabar" then
     options["anchor_area"] = "bar"
   end
+  Private.subRegionPrototype.AddAlphaToDefault(options, "border")
   return options
 end
 
@@ -34,6 +35,9 @@ local properties = {
     type = "color"
   },
 }
+
+Private.subRegionPrototype.AddAlphaProperties(properties, "border")
+Private.subRegionPrototype.AddColorFromBooleanProperty(properties, "border", "border_color")
 
 
 local function create()
@@ -78,6 +82,7 @@ local function modify(parent, region, parentData, data, first)
     end
   end
 
+  region:SetAlpha(1)
   region:SetVisible(data.border_visible)
 
   region.Anchor = function()

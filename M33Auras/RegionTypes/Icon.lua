@@ -50,6 +50,24 @@ local properties = {
     setter = "SetDesaturated",
     type = "bool",
   },
+  desaturationFromBoolean = {
+    display = L["Desaturation percent"] .. " (Boolean)",
+    setter = "SetDesaturated",
+    type = "bool",
+    valueFromBoolean = true,
+    baseProperty = "desaturate",
+    valueLabel = L["Desaturation percent"],
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          value = 1,
+          when = true,
+        },
+      },
+    },
+  },
   width = {
     display = L["Width"],
     setter = "SetRegionWidth",
@@ -72,6 +90,24 @@ local properties = {
     display = L["Color"],
     setter = "Color",
     type = "color"
+  },
+  colorFromBoolean = {
+    display = L["Color"] .. " (Boolean)",
+    setter = "Color",
+    type = "color",
+    colorFromBoolean = true,
+    baseProperty = "color",
+    resetFallback = {1, 1, 1, 1},
+    default = {
+      checks = {
+        {
+          trigger = -1,
+          variable = "alwaystrue",
+          color = {1, 1, 1, 1},
+          when = true,
+        },
+      },
+    },
   },
   inverse = {
     display = L["Inverse"],
@@ -390,7 +426,7 @@ local function modify(parent, region, data)
   region.texYOffset = data.texYOffset or 0
   region:UpdateSize()
 
-  icon:SetDesaturated(data.desaturate);
+  icon:SetDesaturation(data.desaturate and 1 or 0);
 
   local tooltipType = Private.CanHaveTooltip(data);
   if(tooltipType and data.useTooltip) then
@@ -528,7 +564,13 @@ local function modify(parent, region, data)
   end
 
   function region:SetDesaturated(b)
-    icon:SetDesaturated(b);
+    if type(b) == "boolean" then
+      icon:SetDesaturation(b and 1 or 0);
+    elseif type(b) == "number" then
+      icon:SetDesaturation(b);
+    else
+      icon:SetDesaturation(0);
+    end
   end
 
   function region:SetRegionWidth(width)

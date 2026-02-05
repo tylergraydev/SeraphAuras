@@ -4234,11 +4234,8 @@ Private.event_prototypes = {
         else
           stacks = maxCharges and maxCharges ~= 1 and charges or (spellCount and spellCount > 0 and spellCount) or nil;
         end
-        local durationObject, isReady
-        if isSecret then
-          durationObject = M33Auras.GetSpellCooldownDuration(effectiveSpellId)
-          isReady = M33Auras.IsSpellReady(effectiveSpellId)
-        end
+        local durationObject = M33Auras.GetSpellCooldownDuration(effectiveSpellId)
+        local isReady = M33Auras.IsSpellReady(effectiveSpellId)
         if showlossofcontrol and startTime and duration then
           local locStart, locDuration = M33Auras.GetSpellLossOfControlCooldown(spellname);
           if locStart and locDuration and (locStart + locDuration) > (startTime + duration) then
@@ -4636,6 +4633,24 @@ Private.event_prototypes = {
         init = "icon",
         test = "true",
         store = true
+      },
+      {
+        hidden = true,
+        name = "isReady",
+        display = L["Is Ready (Best guess)"],
+        init = 'isReady',
+        store = true,
+        test = "true",
+        conditionType = "bool",
+      },
+      {
+        hidden = true,
+        name = "isReady_secret",
+        display = L["Is Ready (Secret)"],
+        init = 'M33Auras.IsSpellReadyFromDuration(effectiveSpellId)',
+        store = true,
+        test = "true",
+        conditionType = "bool",
       },
     },
     hasSpellID = true,
