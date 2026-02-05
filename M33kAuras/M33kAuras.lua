@@ -3,7 +3,7 @@ local AddonName = ...
 ---@class Private
 local Private = select(2, ...)
 
-local internalVersion = 88
+local internalVersion = 89
 
 -- Lua APIs
 local insert = table.insert

@@ -2488,6 +2488,28 @@ function Private.Modernize(data, oldSnapshot)
     end
   end
 
+  if data.internalVersion < 89 then
+    for _, when in ipairs({ "start", "finish" }) do
+      if data.actions[when] then
+        if type(data.actions[when].sound) == "string" then
+          data.actions[when].sound = data.actions[when].sound:gsub("^Interface\\Add[oO]ns\\M33Auras\\", "Interface\\AddOns\\M33kAuras\\")
+          data.actions[when].sound = data.actions[when].sound:gsub("^Interface\\Add[oO]ns\\WeakAuras\\", "Interface\\AddOns\\M33kAuras\\")
+        end
+      end
+    end
+
+    if data.conditions then
+      for conditionIndex, condition in ipairs(data.conditions) do
+        for changeIndex, change in ipairs(condition.changes) do
+          if change.property == "sound" and type(change.value.sound) == "string" then
+            change.value.sound = change.value.sound:gsub("^Interface\\Add[oO]ns\\M33Auras\\", "Interface\\AddOns\\M33kAuras\\")
+            change.value.sound = change.value.sound:gsub("^Interface\\Add[oO]ns\\WeakAuras\\", "Interface\\AddOns\\M33kAuras\\")
+          end
+        end
+      end
+    end
+  end
+
   data.internalVersion = max(data.internalVersion or 0, M33kAuras.InternalVersion())
 end
 
