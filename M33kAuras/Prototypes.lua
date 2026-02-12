@@ -1059,9 +1059,10 @@ function Private.ExecEnv.CheckGroupMemberType(loadSetting, currentFlags)
 end
 
 function Private.ExecEnv.CheckChargesDirection(direction, triggerDirection)
-  return triggerDirection == "CHANGED"
+  return type(direction) == "number" and not issecretvalue(direction) and
+      (triggerDirection == "CHANGED"
     or (triggerDirection == "GAINED" and direction > 0)
-    or (triggerDirection == "LOST" and direction < 0)
+    or (triggerDirection == "LOST" and direction < 0))
 end
 
 function Private.ExecEnv.CheckCombatLogFlags(flags, flagToCheck)
