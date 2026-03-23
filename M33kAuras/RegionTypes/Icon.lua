@@ -715,8 +715,7 @@ local function modify(parent, region, data)
   --- WORKAROUND
   -- This fixes a issue with barmodels not appearing on icons if the
   -- icon is shown delayed
-  region:SetWidth(region:GetWidth())
-  region:SetHeight(region:GetHeight())
+  region:UpdateSize()
 end
 
 local function validate(data)
