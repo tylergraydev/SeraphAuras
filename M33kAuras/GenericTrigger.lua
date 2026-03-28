@@ -3759,13 +3759,15 @@ function Private.WatchStagger()
             staggerWatchFrame:SetScript("OnUpdate", function()
               Private.StartProfileSystem("stagger")
               local stagger = UnitStagger("player")
-              if not issecretvalue(stagger) and stagger ~= staggerWatchFrame.stagger then
-                staggerWatchFrame.stagger = stagger
-                Private.ScanEvents("WA_UNIT_STAGGER_CHANGED", "player", stagger)
-              end
-              if stagger == 0 then
-                staggerWatchFrame:SetScript("OnUpdate", nil)
-                staggerWatchFrame.onupdate = nil
+              if not issecretvalue(stagger) then
+                if stagger ~= staggerWatchFrame.stagger then
+                  staggerWatchFrame.stagger = stagger
+                  Private.ScanEvents("WA_UNIT_STAGGER_CHANGED", "player", stagger)
+                end
+                if stagger == 0 then
+                  staggerWatchFrame:SetScript("OnUpdate", nil)
+                  staggerWatchFrame.onupdate = nil
+                end
               end
               Private.StopProfileSystem("stagger")
             end)
