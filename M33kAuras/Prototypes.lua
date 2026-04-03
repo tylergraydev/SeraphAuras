@@ -4246,7 +4246,7 @@ Private.event_prototypes = {
         local isSecret = C_Secrets.ShouldSpellCooldownBeSecret(effectiveSpellId) or issecretvalue(maxCharges) or issecretvalue(spellCount)
         local stacks
         if isSecret then
-          stacks = C_Spell.GetSpellDisplayCount(effectiveSpellId)
+          stacks = maxCharges and maxCharges ~= 1 and charges or (spellCount and C_StringUtil.TruncateWhenZero(spellCount)) or C_Spell.GetSpellDisplayCount(effectiveSpellId)
         else
           stacks = maxCharges and maxCharges ~= 1 and charges or (spellCount and spellCount > 0 and spellCount) or nil;
         end
