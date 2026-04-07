@@ -1,5 +1,5 @@
 local MAJOR_VERSION = "LibGetFrame-1.0"
-local MINOR_VERSION = 73
+local MINOR_VERSION = 74
 if not LibStub then
   error(MAJOR_VERSION .. " requires LibStub.")
 end
@@ -616,6 +616,7 @@ local function Init(noDelay)
   GetFramesCacheListener:RegisterEvent("UNIT_PET")
   GetFramesCacheListener:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
   GetFramesCacheListener:SetScript("OnEvent", function(self, event, unit, ...)
+    if SecretCheck(unit) then return end
     fixGetUnitFrameIntegrity()
     if event == "GROUP_ROSTER_UPDATE" then
       wipe(unitPetState)
@@ -624,6 +625,7 @@ local function Init(noDelay)
       end
     end
     if event == "UNIT_PET" then
+      if SecretCheck(UnitIsUnit("player", unit)) then return end
       if not (UnitIsUnit("player", unit) or UnitInParty(unit) or UnitInRaid(unit)) then
         return
       end
