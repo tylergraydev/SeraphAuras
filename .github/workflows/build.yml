@@ -39,6 +39,10 @@ jobs:
 
       - name: Create Package
         uses: BigWigsMods/packager@v2
+        with:
+          # -s skips CurseForge localization fetch — our fork's project has no
+          # localization data imported; translations ship as Locales/*.lua files.
+          args: -s
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
