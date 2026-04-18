@@ -1,4 +1,4 @@
-package-as: WeakAuras
+package-as: SeraphAuras
 
 externals:
   WeakAuras/Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
