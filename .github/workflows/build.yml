@@ -39,6 +39,8 @@ jobs:
 
       - name: Create Package
         uses: BigWigsMods/packager@v2
+        with:
+          args: -l
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
