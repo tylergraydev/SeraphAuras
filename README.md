@@ -25,3 +25,5 @@ M33kAuras is a powerful and flexible framework that allows the display of highly
 To open the options window, type `/M33kAuras` or `/wa` into your chat and hit enter or use the minimap icon.
 
 General information on midnight compatibility listed here https://github.com/m33shoq/M33kAuras/pull/8
+
+Latest changes are pushed to the midnight branch, main branch is only updated so often
