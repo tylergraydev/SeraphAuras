@@ -1,4 +1,4 @@
-package-as: M33kAuras
+package-as: SeraphAuras
 
 externals:
   M33kAuras/Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
